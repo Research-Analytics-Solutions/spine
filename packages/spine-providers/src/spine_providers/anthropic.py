@@ -200,3 +200,10 @@ def _factory(model: str) -> AnthropicProvider:
 def register() -> None:
     """Register the ``anthropic:`` scheme with the Spine provider registry."""
     register_provider("anthropic", _factory)
+
+
+# Self-register on module import (idempotent). Importing this module — directly,
+# via ``import spine_providers``, or by loading the ``spine.plugins`` entry point
+# — makes ``Agent("anthropic:...")`` resolvable. The import is cheap: the heavy
+# anthropic SDK is only imported lazily on the first ``complete`` call.
+register()

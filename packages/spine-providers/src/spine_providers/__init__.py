@@ -8,9 +8,7 @@ installed. Discovery via plugin entry points is also declared for the CLI.
 
 from __future__ import annotations
 
+# Importing the adapter module self-registers the "anthropic:" scheme.
 from spine_providers.anthropic import AnthropicProvider
-from spine_providers.anthropic import register as _register_anthropic
-
-_register_anthropic()
 
 __all__ = ["AnthropicProvider"]
