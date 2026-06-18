@@ -20,6 +20,7 @@ from spine_middleware.multitenancy import TenantBudget
 from spine_middleware.reliability import CircuitBreaker, Idempotency, RateLimit
 from spine_middleware.replay import Recorder, Replayer
 from spine_middleware.retry import Retry
+from spine_middleware.sandbox import Sandbox
 from spine_middleware.structured import StructuredOutput
 from spine_middleware.tooling import ToolOutputTruncation, ToolTimeout
 
@@ -39,6 +40,7 @@ __all__ = [
     "Recorder",
     "Replayer",
     "Retry",
+    "Sandbox",
     "StructuredOutput",
     "TenantBudget",
     "ToolOutputTruncation",
@@ -63,6 +65,7 @@ def register() -> None:
     register_middleware("ToolTimeout", ToolTimeout)
     register_middleware("ToolOutputTruncation", ToolOutputTruncation)
     register_middleware("TenantBudget", TenantBudget)
+    register_middleware("Sandbox", Sandbox)
     # StructuredOutput needs a schema type, so it is used from code, not config.
 
 

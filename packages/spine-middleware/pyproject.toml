@@ -32,6 +32,7 @@ mw_idempotency = "spine_middleware:Idempotency"
 mw_tool_timeout = "spine_middleware:ToolTimeout"
 mw_tool_truncation = "spine_middleware:ToolOutputTruncation"
 mw_tenant_budget = "spine_middleware:TenantBudget"
+mw_sandbox = "spine_middleware:Sandbox"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/spine_middleware"]
