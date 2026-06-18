@@ -124,6 +124,15 @@ async def test_streaming_emits_events() -> None:
     assert agent.last_result.answer == "done"
 
 
+async def test_stream_emits_token_events() -> None:
+    agent = Agent(ScriptedProvider(text("hello there world")))
+    events = [e async for e in agent.stream("hi")]
+    tokens = [e.data["delta"] for e in events if e.type == "token"]
+    assert "".join(tokens).strip() == "hello there world"
+    assert agent.last_result is not None
+    assert agent.last_result.answer == "hello there world"
+
+
 def test_sync_facade() -> None:
     agent = Agent(ScriptedProvider(text("sync works")))
     result = agent.run_sync("hi")

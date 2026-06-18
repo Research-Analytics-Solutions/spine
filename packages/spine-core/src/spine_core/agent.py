@@ -24,11 +24,12 @@ from pydantic import BaseModel
 
 from spine_core.checkpoint import CheckpointStore, InMemoryCheckpointStore
 from spine_core.control import StopRun
+from spine_core.errors import ProviderError
 from spine_core.guards import Guards
 from spine_core.interrupt import Interrupt
 from spine_core.messages import Message, ToolCall
 from spine_core.middleware import ErrorAction, MiddlewareChain, StepContext, ToolContext
-from spine_core.provider import Provider, resolve_provider
+from spine_core.provider import Provider, StreamingProvider, resolve_provider
 from spine_core.result import Result, StopReason
 from spine_core.state import PendingApproval, RunStatus, State
 from spine_core.tools import Tool, raw_tool
@@ -164,7 +165,7 @@ class Agent:
 
         async def runner() -> Result:
             try:
-                result = await self._loop(state, tracer, started)
+                result = await self._loop(state, tracer, started, stream_tokens=True)
                 await self.chain.on_run_end(state, result)
                 return result
             finally:
@@ -241,6 +242,7 @@ class Agent:
         tracer: Tracer,
         started: float,
         should_cancel: Callable[[], bool] | None = None,
+        stream_tokens: bool = False,
     ) -> Result:
         while True:
             if should_cancel is not None and should_cancel():
@@ -274,7 +276,9 @@ class Agent:
                 if ctx.response is None:
                     schemas = [t.schema for t in ctx.tools]
                     tracer.emit(EventType.MODEL_CALL, step=state.step, messages=len(ctx.messages))
-                    response = await self._complete(ctx, schemas, state, tracer, started)
+                    response = await self._complete(
+                        ctx, schemas, state, tracer, started, stream_tokens
+                    )
                     if isinstance(response, Result):  # error path bubbled a Result
                         return response
                     ctx.response = response
@@ -319,6 +323,7 @@ class Agent:
         state: State,
         tracer: Tracer,
         started: float,
+        stream_tokens: bool = False,
     ) -> Any:
         """Call the provider, dispatching ``on_error`` actions (retry/fallback).
 
@@ -349,6 +354,16 @@ class Agent:
 
             provider = ctx.provider or self.provider
             try:
+                if stream_tokens and isinstance(provider, StreamingProvider):
+                    final: Any = None
+                    async for chunk in provider.stream(ctx.messages, schemas):
+                        if chunk.delta:
+                            tracer.emit(EventType.TOKEN, step=state.step, delta=chunk.delta)
+                        if chunk.response is not None:
+                            final = chunk.response
+                    if final is None:
+                        raise ProviderError("streaming provider produced no final response")
+                    return final
                 return await provider.complete(ctx.messages, schemas)
             except Exception as err:  # noqa: BLE001 - delegated to middleware policy
                 action = await self.chain.on_error(ctx, err)

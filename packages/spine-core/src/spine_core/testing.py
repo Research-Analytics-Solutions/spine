@@ -52,13 +52,7 @@ class ScriptedProvider:
         self._index = 0
         self.calls: list[list[Message]] = []  # captured inputs, for assertions
 
-    async def complete(
-        self,
-        messages: list[Message],
-        tools: list[dict[str, Any]] | None = None,
-        **kwargs: Any,
-    ) -> ModelResponse:
-        self.calls.append(list(messages))
+    def _next(self) -> ModelResponse:
         if self._index >= len(self._responses):
             if self._repeat and self._responses:
                 return self._responses[-1]
@@ -67,3 +61,27 @@ class ScriptedProvider:
         if not self._repeat:
             self._index += 1
         return response
+
+    async def complete(
+        self,
+        messages: list[Message],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
+    ) -> ModelResponse:
+        self.calls.append(list(messages))
+        return self._next()
+
+    async def stream(
+        self,
+        messages: list[Message],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Stream the next response's text word-by-word, then the final response."""
+        from spine_core.provider import StreamChunk
+
+        self.calls.append(list(messages))
+        response = self._next()
+        for word in (response.message.content or "").split():
+            yield StreamChunk(delta=word + " ")
+        yield StreamChunk(response=response)

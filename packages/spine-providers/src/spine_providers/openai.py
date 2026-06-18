@@ -190,6 +190,77 @@ class OpenAIProvider:
         resp = await client.chat.completions.create(**params)
         return from_openai_response(resp, self.model)
 
+    async def stream(
+        self,
+        messages: list[Message],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
+    ) -> Any:
+        from spine_core.provider import StreamChunk
+
+        client = self._ensure_client()
+        params: dict[str, Any] = {
+            "model": self.model,
+            "messages": to_openai_messages(messages),
+            "stream": True,
+            "stream_options": {"include_usage": True},
+            **self._defaults,
+            **kwargs,
+        }
+        if tools:
+            params["tools"] = to_openai_tools(tools)
+
+        text_parts: list[str] = []
+        fragments: dict[int, dict[str, str]] = {}
+        finish_reason: str | None = None
+        usage_obj: Any = None
+
+        stream = await client.chat.completions.create(**params)
+        async for chunk in stream:
+            usage_obj = _attr(chunk, "usage", usage_obj) or usage_obj
+            choices = _attr(chunk, "choices") or []
+            if not choices:
+                continue
+            delta = _attr(choices[0], "delta")
+            content = _attr(delta, "content")
+            if content:
+                text_parts.append(content)
+                yield StreamChunk(delta=content)
+            for tc in _attr(delta, "tool_calls", None) or []:
+                frag = fragments.setdefault(
+                    int(_attr(tc, "index", 0) or 0), {"id": "", "name": "", "args": ""}
+                )
+                if _attr(tc, "id"):
+                    frag["id"] = _attr(tc, "id")
+                function = _attr(tc, "function")
+                if _attr(function, "name"):
+                    frag["name"] += _attr(function, "name")
+                if _attr(function, "arguments"):
+                    frag["args"] += _attr(function, "arguments")
+            if _attr(choices[0], "finish_reason"):
+                finish_reason = _attr(choices[0], "finish_reason")
+
+        tool_calls: list[ToolCall] = []
+        for frag in fragments.values():
+            try:
+                arguments = json.loads(frag["args"] or "{}")
+            except (ValueError, TypeError):
+                arguments = {}
+            tool_calls.append(ToolCall(id=frag["id"], name=frag["name"], arguments=arguments))
+
+        input_tokens = int(_attr(usage_obj, "prompt_tokens", 0) or 0)
+        output_tokens = int(_attr(usage_obj, "completion_tokens", 0) or 0)
+        response = ModelResponse(
+            message=Message.assistant("".join(text_parts) or None, tool_calls=tool_calls),
+            usage=Usage(
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cost_usd=_cost(self.model, input_tokens, output_tokens),
+            ),
+            finish_reason=finish_reason,
+        )
+        yield StreamChunk(response=response)
+
 
 def _factory(model: str) -> OpenAIProvider:
     return OpenAIProvider(model)

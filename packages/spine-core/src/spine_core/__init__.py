@@ -35,7 +35,13 @@ from spine_core.middleware import (
     StepContext,
     ToolContext,
 )
-from spine_core.provider import Provider, register_provider, resolve_provider
+from spine_core.provider import (
+    Provider,
+    StreamChunk,
+    StreamingProvider,
+    register_provider,
+    resolve_provider,
+)
 from spine_core.registry import (
     list_checkpoints,
     list_memories,
@@ -82,6 +88,8 @@ __all__ = [
     "StepContext",
     "StopReason",
     "StopRun",
+    "StreamChunk",
+    "StreamingProvider",
     "Tool",
     "ToolCall",
     "ToolContext",

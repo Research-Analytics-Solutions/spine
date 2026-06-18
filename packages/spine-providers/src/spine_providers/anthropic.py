@@ -213,6 +213,34 @@ class AnthropicProvider:
         resp = await client.messages.create(**params)
         return from_anthropic_response(resp, self.model)
 
+    async def stream(
+        self,
+        messages: list[Message],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
+    ) -> Any:
+        from spine_core.provider import StreamChunk
+
+        client = self._ensure_client()
+        system, anth_messages = to_anthropic_messages(messages)
+        params: dict[str, Any] = {
+            "model": self.model,
+            "max_tokens": self.max_tokens,
+            "messages": anth_messages,
+            **self._defaults,
+            **kwargs,
+        }
+        if system is not None:
+            params["system"] = system
+        if tools:
+            params["tools"] = to_anthropic_tools(tools)
+
+        async with client.messages.stream(**params) as stream:
+            async for text in stream.text_stream:
+                yield StreamChunk(delta=text)
+            final = await stream.get_final_message()
+        yield StreamChunk(response=from_anthropic_response(final, self.model))
+
 
 def _factory(model: str) -> AnthropicProvider:
     return AnthropicProvider(model)

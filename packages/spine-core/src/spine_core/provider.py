@@ -12,8 +12,10 @@ points. Discovery stays lazy: an unused provider costs nothing.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from typing import Any, Protocol, runtime_checkable
+
+from pydantic import BaseModel, ConfigDict
 
 from spine_core.errors import ProviderError
 from spine_core.messages import Message, ModelResponse
@@ -29,6 +31,28 @@ class Provider(Protocol):
         tools: list[dict[str, Any]] | None = None,
         **kwargs: Any,
     ) -> ModelResponse: ...
+
+
+class StreamChunk(BaseModel):
+    """One streamed piece. ``delta`` is incremental text; the final chunk carries
+    the assembled ``response``."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    delta: str = ""
+    response: ModelResponse | None = None
+
+
+@runtime_checkable
+class StreamingProvider(Protocol):
+    """A provider that can stream token deltas as well as a final response."""
+
+    def stream(
+        self,
+        messages: list[Message],
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
+    ) -> AsyncIterator[StreamChunk]: ...
 
 
 # scheme -> factory(model_name) -> Provider

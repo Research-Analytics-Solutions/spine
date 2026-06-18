@@ -124,3 +124,32 @@ def test_multimodal_user_message_maps_to_openai_blocks() -> None:
     assert content[0] == {"type": "text", "text": "describe"}
     assert content[1] == {"type": "image_url", "image_url": {"url": "https://x/y.png"}}
     assert content[2]["image_url"]["url"].startswith("data:image/png;base64,QUJD")
+
+
+async def test_openai_streaming_assembles_text_and_usage() -> None:
+    from spine_providers.openai import OpenAIProvider
+
+    def _chunk(content=None, finish=None, usage=None):  # type: ignore[no-untyped-def]
+        delta = SimpleNamespace(content=content, tool_calls=None)
+        choice = SimpleNamespace(delta=delta, finish_reason=finish)
+        return SimpleNamespace(choices=[choice], usage=usage)
+
+    async def _stream():  # type: ignore[no-untyped-def]
+        yield _chunk(content="hel")
+        yield _chunk(content="lo")
+        yield _chunk(finish="stop", usage=SimpleNamespace(prompt_tokens=5, completion_tokens=2))
+
+    class _Completions:
+        async def create(self, **params: Any) -> Any:
+            assert params["stream"] is True
+            return _stream()
+
+    client = SimpleNamespace(chat=SimpleNamespace(completions=_Completions()))
+    provider = OpenAIProvider("gpt-4o", client=client)
+    chunks = [c async for c in provider.stream([Message.user("hi")])]
+    deltas = "".join(c.delta for c in chunks if c.delta)
+    assert deltas == "hello"
+    final = chunks[-1].response
+    assert final is not None
+    assert final.message.content == "hello"
+    assert final.usage.input_tokens == 5

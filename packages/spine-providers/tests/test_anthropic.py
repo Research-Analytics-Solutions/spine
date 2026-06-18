@@ -142,3 +142,38 @@ def test_multimodal_user_message_maps_to_anthropic_blocks() -> None:
     }
     assert content[2]["source"]["type"] == "base64"
     assert content[2]["source"]["media_type"] == "image/jpeg"
+
+
+async def test_anthropic_streaming_yields_deltas_then_final() -> None:
+    from spine_providers.anthropic import AnthropicProvider
+
+    class _FakeStream:
+        async def __aenter__(self) -> _FakeStream:
+            return self
+
+        async def __aexit__(self, *exc: object) -> None:
+            return None
+
+        @property
+        async def text_stream(self):  # type: ignore[no-untyped-def]
+            for piece in ("hello ", "world"):
+                yield piece
+
+        async def get_final_message(self) -> Any:
+            return SimpleNamespace(
+                content=[_block(type="text", text="hello world")],
+                usage=SimpleNamespace(input_tokens=3, output_tokens=2),
+                stop_reason="end_turn",
+            )
+
+    class _Msgs:
+        def stream(self, **params: Any) -> _FakeStream:
+            return _FakeStream()
+
+    client = SimpleNamespace(messages=_Msgs())
+    provider = AnthropicProvider("claude-sonnet-4-6", client=client)
+    chunks = [c async for c in provider.stream([Message.user("hi")])]
+    deltas = [c.delta for c in chunks if c.delta]
+    assert "".join(deltas) == "hello world"
+    assert chunks[-1].response is not None
+    assert chunks[-1].response.message.content == "hello world"

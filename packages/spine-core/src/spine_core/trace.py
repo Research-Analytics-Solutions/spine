@@ -19,6 +19,7 @@ class EventType(str):
 
     STEP_START = "step_start"
     MODEL_CALL = "model_call"
+    TOKEN = "token"
     MODEL_RESPONSE = "model_response"
     TOOL_CALL = "tool_call"
     TOOL_RESULT = "tool_result"
