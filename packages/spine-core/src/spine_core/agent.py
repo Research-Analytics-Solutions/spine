@@ -11,11 +11,12 @@ process.
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import functools
 import json
 import time
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from typing import Any
 
 import anyio
@@ -30,8 +31,13 @@ from spine_core.middleware import ErrorAction, MiddlewareChain, StepContext, Too
 from spine_core.provider import Provider, resolve_provider
 from spine_core.result import Result, StopReason
 from spine_core.state import PendingApproval, RunStatus, State
-from spine_core.tools import Tool
+from spine_core.tools import Tool, raw_tool
 from spine_core.trace import EventType, Tracer
+
+# Tracks sub-agent delegation depth across as_tool() calls for cycle bounding.
+_DELEGATION_DEPTH: contextvars.ContextVar[int] = contextvars.ContextVar(
+    "spine_delegation_depth", default=0
+)
 
 # Hard safety net: even if a middleware keeps asking to retry/fallback forever,
 # the kernel refuses to call the provider more than this many times per step.
@@ -88,6 +94,7 @@ class Agent:
         provider: Provider | None = None,
         system: str | None = None,
         name: str | None = None,
+        parallel_tools: bool = False,
     ) -> None:
         self.provider: Provider = provider or resolve_provider(model)
         self.tools: dict[str, Tool] = {t.name: t for t in (tools or [])}
@@ -96,16 +103,52 @@ class Agent:
         self.checkpoint: CheckpointStore = checkpoint or InMemoryCheckpointStore()
         self.system = system
         self.name = name
+        self.parallel_tools = parallel_tools
         self.last_result: Result | None = None
 
     # -- public API ---------------------------------------------------------
 
-    async def run(self, input: str, *, session_id: str | None = None) -> Result:
+    async def run(
+        self,
+        input: str,
+        *,
+        session_id: str | None = None,
+        should_cancel: Callable[[], bool] | None = None,
+    ) -> Result:
         state = await self._start(input, session_id)
         await self.chain.on_run_start(state)
-        result = await self._loop(state, Tracer(), time.monotonic())
+        result = await self._loop(state, Tracer(), time.monotonic(), should_cancel)
         await self.chain.on_run_end(state, result)
         return result
+
+    def as_tool(
+        self, *, name: str | None = None, description: str | None = None, max_depth: int = 8
+    ) -> Tool:
+        """Expose this agent as a tool another agent can call (sub-agent).
+
+        Delegation depth is tracked across calls so an A->B->A cycle is bounded.
+        """
+        tool_name = name or self.name or "subagent"
+
+        async def call(input: str) -> str:
+            depth = _DELEGATION_DEPTH.get()
+            if depth >= max_depth:
+                return f"Error: max delegation depth ({max_depth}) exceeded"
+            token = _DELEGATION_DEPTH.set(depth + 1)
+            try:
+                result = await self.run(input)
+            finally:
+                _DELEGATION_DEPTH.reset(token)
+            return result.answer or f"[sub-agent stopped: {result.stopped_reason.value}]"
+
+        schema = {
+            "type": "object",
+            "properties": {"input": {"type": "string", "description": "Task for the sub-agent."}},
+            "required": ["input"],
+        }
+        return raw_tool(
+            tool_name, description or f"Delegate a task to the {tool_name} agent.", schema, call
+        )
 
     async def stream(self, input: str, *, session_id: str | None = None) -> AsyncIterator[Any]:
         """Yield trace events live as the run executes; final ``Result`` lands
@@ -190,8 +233,26 @@ class Agent:
         await self.checkpoint.put(state)
         return state
 
-    async def _loop(self, state: State, tracer: Tracer, started: float) -> Result:
+    async def _loop(
+        self,
+        state: State,
+        tracer: Tracer,
+        started: float,
+        should_cancel: Callable[[], bool] | None = None,
+    ) -> Result:
         while True:
+            if should_cancel is not None and should_cancel():
+                # Cooperative cancel: the current step has finished and state is
+                # checkpointed, so the run is resumable from here.
+                tracer.emit(
+                    EventType.GUARD_TRIP, step=state.step, reason=StopReason.CANCELLED.value
+                )
+                state.status = RunStatus.DONE
+                await self.checkpoint.put(state)
+                return self._result(
+                    state, tracer, StopReason.CANCELLED, answer=self._last_text(state)
+                )
+
             trip = self.guards.check(state, time.monotonic() - started)
             if trip is not None:
                 tracer.emit(EventType.GUARD_TRIP, step=state.step, reason=trip.value)
@@ -298,36 +359,78 @@ class Agent:
                 return self._result(state, tracer, StopReason.ERROR, error=str(err))
 
     async def _run_tool_calls(self, calls: list[ToolCall], state: State, tracer: Tracer) -> None:
-        for index, call in enumerate(calls):
-            tool = self.tools.get(call.name)
-            tctx = ToolContext(state, tool, call)
-            await self.chain.before_tool(tctx)
+        # Parallel fan-out is only safe when no call in the batch needs approval
+        # (HITL pauses are inherently sequential). Manual Interrupt inside a
+        # parallel tool is downgraded to an error result.
+        approvals = any((self.tools.get(c.name) and self.tools[c.name].approve) for c in calls)
+        if self.parallel_tools and len(calls) > 1 and not approvals:
+            messages: list[Message | None] = [None] * len(calls)
 
-            if tool is None:
-                content = f"Error: unknown tool '{call.name}'"
-                tracer.emit(
-                    EventType.TOOL_RESULT, step=state.step, tool=call.name, error="unknown_tool"
+            async def worker(index: int, call: ToolCall) -> None:
+                messages[index] = await self._resolve_tool_call(
+                    call, state, tracer, allow_pause=False
                 )
-                state.add_message(Message.tool(content, call.id, call.name))
-                continue
 
-            if tool.approve:
-                payload = {"tool": call.name, "arguments": tctx.args}
-                raise _Pause(call, "approve", payload, calls[index + 1 :])
+            async with anyio.create_task_group() as tg:
+                for index, call in enumerate(calls):
+                    tg.start_soon(worker, index, call)
+            for message in messages:
+                if message is not None:
+                    state.add_message(message)
+            return
 
-            tracer.emit(EventType.TOOL_CALL, step=state.step, tool=call.name, arguments=tctx.args)
+        for index, call in enumerate(calls):
             try:
-                tctx.result = await tool.call(tctx.args)
-            except Interrupt as intr:
-                raise _Pause(call, "manual", intr.payload, calls[index + 1 :]) from None
-            except Exception as err:  # noqa: BLE001 - surfaced to the model, not fatal
-                tctx.error = err
-                tctx.result = f"Error executing tool '{call.name}': {err}"
+                message = await self._resolve_tool_call(call, state, tracer, allow_pause=True)
+            except _Pause as pause:
+                pause.remaining = calls[index + 1 :]
+                raise
+            state.add_message(message)
 
-            await self.chain.after_tool(tctx)
+    async def _resolve_tool_call(
+        self, call: ToolCall, state: State, tracer: Tracer, *, allow_pause: bool
+    ) -> Message:
+        """Run one tool call and return its result message (does not append)."""
+        tool = self.tools.get(call.name)
+        tctx = ToolContext(state, tool, call)
+        await self.chain.before_tool(tctx)
+
+        if tool is None:
+            tracer.emit(
+                EventType.TOOL_RESULT, step=state.step, tool=call.name, error="unknown_tool"
+            )
+            return Message.tool(f"Error: unknown tool '{call.name}'", call.id, call.name)
+
+        if tool.approve and allow_pause:
+            payload = {"tool": call.name, "arguments": tctx.args}
+            raise _Pause(call, "approve", payload, [])
+
+        if tctx.skip:  # idempotency / replay preset the result
             content = _stringify(tctx.result)
             tracer.emit(EventType.TOOL_RESULT, step=state.step, tool=call.name, result=content)
-            state.add_message(Message.tool(content, call.id, call.name))
+            return Message.tool(content, call.id, call.name)
+
+        tracer.emit(EventType.TOOL_CALL, step=state.step, tool=call.name, arguments=tctx.args)
+        try:
+            if tctx.timeout_s is not None:
+                with anyio.fail_after(tctx.timeout_s):
+                    tctx.result = await tool.call(tctx.args)
+            else:
+                tctx.result = await tool.call(tctx.args)
+        except Interrupt as intr:
+            if allow_pause:
+                raise _Pause(call, "manual", intr.payload, []) from None
+            tctx.result = (
+                f"Error: tool '{call.name}' requested human input (not allowed in parallel)"
+            )
+        except Exception as err:  # noqa: BLE001 - surfaced to the model, not fatal
+            tctx.error = err
+            tctx.result = f"Error executing tool '{call.name}': {err}"
+
+        await self.chain.after_tool(tctx)
+        content = _stringify(tctx.result)
+        tracer.emit(EventType.TOOL_RESULT, step=state.step, tool=call.name, result=content)
+        return Message.tool(content, call.id, call.name)
 
     async def _apply_decision(
         self, state: State, tracer: Tracer, pending: PendingApproval, decision: Any

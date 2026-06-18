@@ -130,6 +130,63 @@ def test_sync_facade() -> None:
     assert result.answer == "sync works"
 
 
+async def test_parallel_tool_calls_run_concurrently() -> None:
+    import anyio
+
+    order: list[str] = []
+
+    @tool
+    async def slow() -> str:
+        """Slow tool."""
+        await anyio.sleep(0.05)
+        order.append("slow")
+        return "slow-done"
+
+    @tool
+    async def fast() -> str:
+        """Fast tool."""
+        order.append("fast")
+        return "fast-done"
+
+    provider = ScriptedProvider(calls(("slow", {}), ("fast", {})), text("done"))
+    agent = Agent(provider, tools=[slow, fast], parallel_tools=True)
+    result = await agent.run("do both")
+
+    assert result.answer == "done"
+    # fast finished before slow despite being requested second -> concurrent
+    assert order == ["fast", "slow"]
+    # results appended in call order regardless of completion order
+    tool_msgs = [m for m in result.state.messages if m.role.value == "tool"]
+    assert [m.content for m in tool_msgs] == ["slow-done", "fast-done"]
+
+
+async def test_cooperative_cancellation() -> None:
+    provider = ScriptedProvider(calls(("add", {"a": 1, "b": 1})), repeat=True)
+    flips = {"n": 0}
+
+    def should_cancel() -> bool:
+        flips["n"] += 1
+        return flips["n"] > 2  # cancel after a couple of steps
+
+    agent = Agent(provider, tools=[add], guards=Guards(max_steps=100))
+    result = await agent.run("loop", should_cancel=should_cancel)
+    assert result.stopped_reason is StopReason.CANCELLED
+    assert result.state.step >= 1  # work was checkpointed, run is resumable
+
+
+async def test_agent_as_tool_delegation() -> None:
+    sub = Agent(ScriptedProvider(text("subagent says hi")), name="greeter")
+    parent_provider = ScriptedProvider(
+        calls(("greeter", {"input": "say hi"})),
+        text("the greeter replied"),
+    )
+    parent = Agent(parent_provider, tools=[sub.as_tool()])
+    result = await parent.run("delegate")
+    assert result.answer == "the greeter replied"
+    tool_msg = next(m for m in result.state.messages if m.role.value == "tool")
+    assert tool_msg.content == "subagent says hi"
+
+
 async def test_run_scope_hooks_bracket_the_run() -> None:
     from spine_core import Result, State
 

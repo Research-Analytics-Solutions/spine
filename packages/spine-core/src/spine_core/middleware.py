@@ -67,7 +67,7 @@ class StepContext:
 class ToolContext:
     """Mutable per-tool-call context shared across the tool hooks."""
 
-    __slots__ = ("state", "tool", "call", "args", "result", "error")
+    __slots__ = ("state", "tool", "call", "args", "result", "error", "timeout_s", "skip")
 
     def __init__(self, state: State, tool: Tool | None, call: ToolCall) -> None:
         self.state = state
@@ -76,6 +76,10 @@ class ToolContext:
         self.args: dict[str, Any] = dict(call.arguments)
         self.result: Any = None
         self.error: Exception | None = None
+        # A middleware may set these in before_tool: a per-call timeout, or skip
+        # execution and use a preset result (idempotency / deterministic replay).
+        self.timeout_s: float | None = None
+        self.skip: bool = False
 
 
 class Middleware:
