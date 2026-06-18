@@ -62,3 +62,62 @@ Auto-generated from the source. The public surface lives in `spine_core`.
 ::: spine_core.register_middleware
 ::: spine_core.register_checkpoint
 ::: spine_core.register_memory
+
+## Middleware (`spine_middleware`)
+
+::: spine_middleware.Retry
+::: spine_middleware.ModelFallback
+::: spine_middleware.LoopGuard
+::: spine_middleware.CircuitBreaker
+::: spine_middleware.RateLimit
+::: spine_middleware.CostTracking
+::: spine_middleware.Cache
+::: spine_middleware.Compaction
+::: spine_middleware.StructuredOutput
+::: spine_middleware.ToolTimeout
+::: spine_middleware.ToolOutputTruncation
+::: spine_middleware.Idempotency
+::: spine_middleware.Sandbox
+::: spine_middleware.PIIRedaction
+::: spine_middleware.PromptInjectionScreen
+::: spine_middleware.ContentPolicy
+::: spine_middleware.TenantBudget
+::: spine_middleware.MemoryRecall
+::: spine_middleware.Recorder
+::: spine_middleware.Replayer
+
+## Backends (`spine_backends`)
+
+::: spine_backends.SQLiteCheckpoint
+::: spine_backends.RedisCheckpoint
+::: spine_backends.PostgresCheckpoint
+::: spine_backends.InMemoryVectorMemory
+::: spine_backends.BufferMemory
+::: spine_backends.PgVectorMemory
+::: spine_backends.HashEmbedder
+::: spine_backends.OpenAIEmbedder
+
+## Providers (`spine_providers`)
+
+::: spine_providers.OpenAIProvider
+::: spine_providers.AnthropicProvider
+
+## Eval (`spine_eval`)
+
+::: spine_eval.evaluate
+::: spine_eval.load_dataset
+::: spine_eval.EvalReport
+::: spine_eval.Case
+::: spine_eval.LLMJudge
+
+## Orchestration (`spine_orchestration`)
+
+::: spine_orchestration.Sequential
+::: spine_orchestration.supervisor
+::: spine_orchestration.Handoff
+
+## Adapters
+
+::: spine_mcp.MCPToolset
+::: spine_a2a.A2AAgent
+::: spine_otel.OTelMiddleware

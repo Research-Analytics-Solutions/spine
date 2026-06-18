@@ -110,13 +110,16 @@ nav:
       - Tracing, streaming & replay: concepts/observability.md
   - Guides:
       - Models & any provider: guides/models.md
+      - Multi-agent & sub-agents: guides/orchestration.md
       - Memory: guides/memory.md
       - MCP tools: guides/mcp.md
-      - Multi-agent orchestration: guides/orchestration.md
       - Evaluation: guides/eval.md
       - Guardrails & safety: guides/guardrails.md
       - Deployment & scale: guides/deployment.md
+      - Patterns & edge cases: guides/patterns.md
+  - Cookbook: guides/examples.md
   - Reference:
+      - Data model & wire shapes: reference/data-model.md
       - Middleware catalog: reference/middleware.md
       - CLI: reference/cli.md
       - Plugin authoring: reference/plugins.md
