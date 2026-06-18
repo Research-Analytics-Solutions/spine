@@ -15,6 +15,12 @@ hook points (no kernel edits).
 | `PIIRedaction` | `after_tool`, `after_model` | Redact PII from tool output (and traces) and the final answer |
 | `PromptInjectionScreen` | `after_tool` | Treat tool output as untrusted: annotate or block on injection patterns |
 | `ContentPolicy` | `before/after_model` | Block input/output on banned patterns or a custom validator (`StopReason.GUARDRAIL`) |
+| `ToolTimeout` | `before_tool` | Per-tool wall-clock timeout (kernel cancels; error fed back) |
+| `ToolOutputTruncation` | `after_tool` | Cap huge tool outputs before re-feeding the context |
+| `CircuitBreaker` | `before/after_model`, `on_error` | Open after N failures, fail fast for a cooldown |
+| `Idempotency` | `before/after_tool` | Run a side-effecting tool once per `(tool, args)` key |
+| `RateLimit` | `before_model` | Per-process token-bucket on model calls |
+| `Recorder` / `Replayer` | record / replay | Deterministic replay of model + tool outputs |
 
 ```python
 from spine_core import Agent, Guards

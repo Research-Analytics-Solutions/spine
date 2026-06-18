@@ -16,6 +16,7 @@ from spine_middleware.fallback import ModelFallback
 from spine_middleware.guardrails import ContentPolicy, PIIRedaction, PromptInjectionScreen
 from spine_middleware.loopguard import LoopGuard
 from spine_middleware.reliability import CircuitBreaker, Idempotency, RateLimit
+from spine_middleware.replay import Recorder, Replayer
 from spine_middleware.retry import Retry
 from spine_middleware.structured import StructuredOutput
 from spine_middleware.tooling import ToolOutputTruncation, ToolTimeout
@@ -32,6 +33,8 @@ __all__ = [
     "PIIRedaction",
     "PromptInjectionScreen",
     "RateLimit",
+    "Recorder",
+    "Replayer",
     "Retry",
     "StructuredOutput",
     "ToolOutputTruncation",
