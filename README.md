@@ -44,22 +44,29 @@ print((await agent.run("say hello")).answer)
 
 ## Install
 
+One package, lean core, opt-in extras:
+
 ```bash
-uv add spine-core spine-providers spine-middleware
+pip install spinekit                  # kernel only (pydantic + anyio)
+pip install "spinekit[openai]"        # + OpenAI
+pip install "spinekit[anthropic,redis,cli]"   # pick parts
+pip install "spinekit[all]"           # everything
 ```
+
+Import name stays `spine_core`. See the [install guide](https://research-analytics-solutions.github.io/spine/install/).
 
 ## What's in the box
 
-| Package | What |
-|---|---|
-| `spine-core` | the kernel — loop, state, guards, tracer, protocols, HITL, streaming |
-| `spine-providers` | OpenAI + Anthropic (and any OpenAI-compatible endpoint) |
-| `spine-middleware` | retry, fallback, guardrails, cache, memory recall, sandbox, replay, … |
-| `spine-backends` | checkpoints (SQLite/Redis/Postgres) + memory (vector/buffer/pgvector) |
-| `spine-mcp` · `spine-a2a` · `spine-otel` | MCP tools · remote agents · OpenTelemetry |
-| `spine-eval` | dataset + scorers + Cost/Latency/Efficacy/Reliability report |
-| `spine-orchestration` | sequential / supervisor / handoff |
-| `spine-cli` | `init` / `run` / `chat` / `dev` / `trace` / `eval` / `doctor` / `plugin` |
+| Module | Extra | What |
+|---|---|---|
+| `spine_core` | — | the kernel — loop, state, guards, tracer, protocols, HITL, streaming |
+| `spine_middleware` | — | retry, fallback, guardrails, cache, memory recall, sandbox, replay, … |
+| `spine_backends` | `redis` / `postgres` | checkpoints (SQLite always; Redis/Postgres) + memory (vector/buffer/pgvector) |
+| `spine_providers` | `openai` / `anthropic` | OpenAI + Anthropic (and any OpenAI-compatible endpoint) |
+| `spine_mcp` · `spine_a2a` · `spine_otel` | `mcp` · `a2a` · `otel` | MCP tools · remote agents · OpenTelemetry |
+| `spine_eval` | `eval` | dataset + scorers + Cost/Latency/Efficacy/Reliability report |
+| `spine_orchestration` | — | sequential / supervisor / handoff |
+| `spine_cli` | `cli` | `init` / `run` / `chat` / `dev` / `trace` / `eval` / `doctor` / `plugin` |
 
 ## Develop
 

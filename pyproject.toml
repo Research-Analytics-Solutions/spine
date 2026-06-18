@@ -1,39 +1,109 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
-name = "spine-workspace"
-version = "0"
-description = "Spine monorepo workspace (dev tooling only; real packages live in packages/)."
+name = "spinekit"
+version = "0.1.0"
+description = "A lightweight, modular, protocol-native runtime for production AI agents."
+readme = "README.md"
 requires-python = ">=3.12"
+license = "MIT"
+authors = [{ name = "Research Analytics Solutions" }]
+keywords = ["ai", "agents", "llm", "runtime", "kernel", "mcp", "a2a"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+# The kernel is lean: only these are always installed. Everything heavy is an extra.
+dependencies = [
+    "pydantic>=2.7",
+    "anyio>=4.4",
+]
 
-[tool.uv]
-package = false
+[project.optional-dependencies]
+openai = ["openai>=1.40"]
+anthropic = ["anthropic>=0.40"]
+providers = ["openai>=1.40", "anthropic>=0.40"]
+redis = ["redis>=5.0"]
+postgres = ["asyncpg>=0.29"]
+mcp = ["mcp>=1.2"]
+a2a = ["httpx>=0.27"]
+otel = ["opentelemetry-api>=1.27", "opentelemetry-sdk>=1.27"]
+otlp = ["opentelemetry-exporter-otlp-proto-http>=1.27"]
+eval = ["pyyaml>=6.0"]
+cli = ["typer>=0.12", "rich>=13.7"]
+all = [
+    "openai>=1.40",
+    "anthropic>=0.40",
+    "redis>=5.0",
+    "asyncpg>=0.29",
+    "mcp>=1.2",
+    "httpx>=0.27",
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-http>=1.27",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "rich>=13.7",
+]
 
-[tool.uv.workspace]
-members = ["packages/*"]
+[project.urls]
+Homepage = "https://github.com/Research-Analytics-Solutions/spine"
+Documentation = "https://research-analytics-solutions.github.io/spine/"
+Repository = "https://github.com/Research-Analytics-Solutions/spine"
 
-[tool.uv.sources]
-spine-core = { workspace = true }
-spine-providers = { workspace = true }
-spine-cli = { workspace = true }
-spine-otel = { workspace = true }
-spine-middleware = { workspace = true }
-spine-backends = { workspace = true }
-spine-mcp = { workspace = true }
-spine-eval = { workspace = true }
-spine-orchestration = { workspace = true }
-spine-a2a = { workspace = true }
+[project.scripts]
+spine = "spine_cli.app:app"
+
+[project.entry-points."spine.plugins"]
+anthropic = "spine_providers.anthropic:AnthropicProvider"
+openai = "spine_providers.openai:OpenAIProvider"
+mw_retry = "spine_middleware:Retry"
+mw_fallback = "spine_middleware:ModelFallback"
+mw_loopguard = "spine_middleware:LoopGuard"
+mw_cost = "spine_middleware:CostTracking"
+mw_compaction = "spine_middleware:Compaction"
+mw_cache = "spine_middleware:Cache"
+mw_pii = "spine_middleware:PIIRedaction"
+mw_injection = "spine_middleware:PromptInjectionScreen"
+mw_content_policy = "spine_middleware:ContentPolicy"
+mw_circuit_breaker = "spine_middleware:CircuitBreaker"
+mw_rate_limit = "spine_middleware:RateLimit"
+mw_idempotency = "spine_middleware:Idempotency"
+mw_tool_timeout = "spine_middleware:ToolTimeout"
+mw_tool_truncation = "spine_middleware:ToolOutputTruncation"
+mw_tenant_budget = "spine_middleware:TenantBudget"
+mw_sandbox = "spine_middleware:Sandbox"
+backend_sqlite = "spine_backends:SQLiteCheckpoint"
+backend_redis = "spine_backends:RedisCheckpoint"
+backend_postgres = "spine_backends:PostgresCheckpoint"
+memory_vector = "spine_backends:InMemoryVectorMemory"
+memory_buffer = "spine_backends:BufferMemory"
+memory_pgvector = "spine_backends:PgVectorMemory"
+otel = "spine_otel.middleware:OTelMiddleware"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "packages/spine-core/src/spine_core",
+    "packages/spine-providers/src/spine_providers",
+    "packages/spine-middleware/src/spine_middleware",
+    "packages/spine-backends/src/spine_backends",
+    "packages/spine-cli/src/spine_cli",
+    "packages/spine-mcp/src/spine_mcp",
+    "packages/spine-a2a/src/spine_a2a",
+    "packages/spine-otel/src/spine_otel",
+    "packages/spine-eval/src/spine_eval",
+    "packages/spine-orchestration/src/spine_orchestration",
+]
 
 [dependency-groups]
 dev = [
-    "spine-core",
-    "spine-providers",
-    "spine-cli",
-    "spine-otel",
-    "spine-middleware",
-    "spine-backends",
-    "spine-mcp",
-    "spine-eval",
-    "spine-orchestration",
-    "spine-a2a",
+    # tooling
     "pytest>=8.2",
     "pytest-asyncio>=0.24",
     "hypothesis>=6.100",
@@ -42,6 +112,18 @@ dev = [
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.26",
     "markdown-exec>=1.9",
+    # runtime libs needed to exercise every module in tests
+    "openai>=1.40",
+    "anthropic>=0.40",
+    "redis>=5.0",
+    "asyncpg>=0.29",
+    "mcp>=1.2",
+    "httpx>=0.27",
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "rich>=13.7",
 ]
 
 [tool.pytest.ini_options]

@@ -1,47 +1,65 @@
 # Installation
 
-Spine is a set of small packages. Install only what you use.
+Spine ships as a single package, **`spinekit`**, with a lean core and opt-in
+extras. The import name stays `spine_core` (etc.).
 
 ```bash
-# the kernel — zero heavy deps (Pydantic + anyio)
-uv add spine-core
-
-# a provider adapter (OpenAI + Anthropic + any OpenAI-compatible endpoint)
-uv add spine-providers
-
-# the middleware suite (retry, guardrails, cache, memory recall, …)
-uv add spine-middleware
-
-# durable backends (SQLite/Redis/Postgres checkpoints, vector memory)
-uv add spine-backends
-
-# the CLI
-uv add spine-cli
+# the kernel — only Pydantic + anyio
+pip install spinekit            # or: uv add spinekit
 ```
 
-Other packages: `spine-mcp`, `spine-a2a`, `spine-otel`, `spine-eval`,
-`spine-orchestration`.
+The full Spine code is installed (it's small); the **heavy dependencies** are
+extras, so your project pulls only what it uses.
 
-!!! note "Optional extras"
-    Some backends pull heavy drivers only when you ask:
+## Extras
 
-    ```bash
-    uv add 'spine-backends[redis]'      # redis.asyncio
-    uv add 'spine-backends[postgres]'   # asyncpg
-    uv add 'spine-otel[otlp]'           # OTLP exporter
-    ```
+```bash
+pip install "spinekit[openai]"            # OpenAI provider
+pip install "spinekit[anthropic]"         # Anthropic provider
+pip install "spinekit[providers]"         # both
+pip install "spinekit[cli]"               # the spine CLI (Typer + Rich)
+pip install "spinekit[redis]"             # Redis checkpoint
+pip install "spinekit[postgres]"          # Postgres / pgvector
+pip install "spinekit[mcp]"               # MCP tools
+pip install "spinekit[a2a]"               # remote agents (A2A)
+pip install "spinekit[otel]"              # OpenTelemetry  (+[otlp] for the exporter)
+pip install "spinekit[eval]"              # the eval harness (YAML datasets)
+pip install "spinekit[all]"               # everything
+```
+
+Combine them: `pip install "spinekit[openai,redis,cli]"`.
+
+| Extra | Pulls | For |
+|---|---|---|
+| `openai` / `anthropic` / `providers` | the provider SDK(s) | native models |
+| `cli` | typer, rich | the `spine` command |
+| `redis` / `postgres` | redis / asyncpg | distributed checkpoints, pgvector |
+| `mcp` / `a2a` | mcp / httpx | MCP tools, remote agents |
+| `otel` / `otlp` | opentelemetry | observability |
+| `eval` | pyyaml | YAML eval datasets |
+| `all` | all of the above | kitchen sink |
+
+!!! note "What's always there"
+    `spine_core`, `spine_middleware`, `spine_backends` (SQLite + in-memory),
+    `spine_orchestration` need no extra — their code ships with the base install
+    and depends only on the standard library + Pydantic + anyio.
 
 ## Requirements
 
 - Python **3.12+**
-- The kernel's only runtime dependencies are **Pydantic v2** and **anyio**.
+- Base install pulls only **Pydantic v2** and **anyio**.
+
+## Any OpenAI-compatible endpoint
+
+No extra beyond `[openai]` — point the client at a `base_url` (Ollama, vLLM,
+Groq, …). See [Models & any provider](guides/models.md).
 
 ## Scaffold a project
 
 ```bash
-uv run spine init my-agent
-cd my-agent && uv sync
-uv run spine doctor
+pip install "spinekit[cli]"
+spine init my-agent
+cd my-agent && spine doctor
 ```
 
 See the [CLI reference](reference/cli.md) for the generated layout.

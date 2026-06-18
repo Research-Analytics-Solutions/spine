@@ -28,14 +28,10 @@ jobs:
           uv run mypy
           uv run pytest
 
-      - name: Build every workspace package
+      - name: Build the spinekit distribution
         run: |
           rm -rf dist
-          for pkg in packages/*/; do
-            echo "::group::build $pkg"
-            uv build "$pkg" --out-dir dist
-            echo "::endgroup::"
-          done
+          uv build --out-dir dist
           ls -la dist
 
       - name: Publish to PyPI (trusted publishing)
