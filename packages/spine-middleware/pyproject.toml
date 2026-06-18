@@ -22,6 +22,9 @@ mw_fallback = "spine_middleware:ModelFallback"
 mw_loopguard = "spine_middleware:LoopGuard"
 mw_cost = "spine_middleware:CostTracking"
 mw_compaction = "spine_middleware:Compaction"
+mw_pii = "spine_middleware:PIIRedaction"
+mw_injection = "spine_middleware:PromptInjectionScreen"
+mw_content_policy = "spine_middleware:ContentPolicy"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/spine_middleware"]

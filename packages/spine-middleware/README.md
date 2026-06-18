@@ -11,6 +11,9 @@ hook points (no kernel edits).
 | `CostTracking` | `after_model` | Fill `cost_usd` from a price table so cost guards bite |
 | `Compaction` | `before_model` | Trim long histories non-destructively |
 | `StructuredOutput` | `before/after_model` | Validate the final answer against a Pydantic schema, repairing on failure |
+| `PIIRedaction` | `after_tool`, `after_model` | Redact PII from tool output (and traces) and the final answer |
+| `PromptInjectionScreen` | `after_tool` | Treat tool output as untrusted: annotate or block on injection patterns |
+| `ContentPolicy` | `before/after_model` | Block input/output on banned patterns or a custom validator (`StopReason.GUARDRAIL`) |
 
 ```python
 from spine_core import Agent, Guards

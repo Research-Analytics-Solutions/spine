@@ -12,15 +12,19 @@ from spine_core.registry import register_middleware
 from spine_middleware.compaction import Compaction
 from spine_middleware.cost import CostTracking
 from spine_middleware.fallback import ModelFallback
+from spine_middleware.guardrails import ContentPolicy, PIIRedaction, PromptInjectionScreen
 from spine_middleware.loopguard import LoopGuard
 from spine_middleware.retry import Retry
 from spine_middleware.structured import StructuredOutput
 
 __all__ = [
     "Compaction",
+    "ContentPolicy",
     "CostTracking",
     "LoopGuard",
     "ModelFallback",
+    "PIIRedaction",
+    "PromptInjectionScreen",
     "Retry",
     "StructuredOutput",
 ]
@@ -33,6 +37,9 @@ def register() -> None:
     register_middleware("LoopGuard", LoopGuard)
     register_middleware("CostTracking", CostTracking)
     register_middleware("Compaction", Compaction)
+    register_middleware("PIIRedaction", PIIRedaction)
+    register_middleware("PromptInjectionScreen", PromptInjectionScreen)
+    register_middleware("ContentPolicy", ContentPolicy)
     # StructuredOutput needs a schema type, so it is used from code, not config.
 
 
