@@ -104,7 +104,7 @@ Efficacy/Reliability table, and **exits non-zero on any failure** (CI-friendly).
 
 ```
 my-agent/
-├── pyproject.toml        # pins spine-core + chosen plugins
+├── pyproject.toml        # pins spinekit + chosen extras
 ├── spine.toml            # declarative config
 ├── .env.example          # documented secrets (copy to .env)
 ├── agents/

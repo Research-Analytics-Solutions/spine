@@ -23,7 +23,7 @@ agent = Agent(ScriptedProvider(text("scripted hi")))
 def test_version() -> None:
     result = runner.invoke(app, ["version"])
     assert result.exit_code == 0
-    assert "spine-cli" in result.stdout
+    assert "spinekit" in result.stdout
 
 
 def test_init_scaffolds_runnable_project(tmp_path: Path) -> None:

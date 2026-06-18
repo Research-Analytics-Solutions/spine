@@ -7,7 +7,7 @@ more with no new code.
 
 ```python
 agent = Agent("openai:gpt-4o-mini")
-agent = Agent("anthropic:claude-sonnet-4-6")  # needs spine-providers + ANTHROPIC_API_KEY
+agent = Agent("anthropic:claude-sonnet-4-6")  # needs spinekit[anthropic] + ANTHROPIC_API_KEY
 ```
 
 Both read their key from the environment (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).

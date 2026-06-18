@@ -29,10 +29,16 @@ console = Console()
 
 @app.command()
 def version() -> None:
-    """Print Spine versions."""
-    from spine_core import __version__ as core_version
+    """Print the installed Spine version."""
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as _pkg_version
 
-    console.print(f"spine-cli [bold]0.1.0[/]  ·  spine-core [bold]{core_version}[/]")
+    try:
+        ver = _pkg_version("spinekit")
+    except PackageNotFoundError:
+        from spine_core import __version__ as ver
+
+    console.print(f"spinekit [bold]{ver}[/]")
 
 
 @app.command()

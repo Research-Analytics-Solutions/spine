@@ -15,11 +15,7 @@ version = "0.1.0"
 description = "A Spine agent."
 requires-python = ">=3.12"
 dependencies = [
-    "spine-core",
-    "spine-providers",
-    "spine-middleware",
-    "spine-backends",
-    "spine-eval",
+    "spinekit[anthropic,cli,eval]",
 ]
 """
 

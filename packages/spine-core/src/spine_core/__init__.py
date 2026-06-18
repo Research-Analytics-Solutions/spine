@@ -58,7 +58,7 @@ from spine_core.state import PendingApproval, RunStatus, State
 from spine_core.tools import Tool, raw_tool, tool
 from spine_core.trace import EventType, TraceEvent, Tracer
 
-__version__ = "0.1.0"
+__version__ = "0.1.0"  # x-release-please-version
 
 __all__ = [
     "Agent",
