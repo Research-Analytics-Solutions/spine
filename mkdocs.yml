@@ -3,7 +3,7 @@ site_description: A lightweight, modular, protocol-native runtime for production
 site_url: https://research-analytics-solutions.github.io/spine/
 repo_url: https://github.com/Research-Analytics-Solutions/spine
 repo_name: Research-Analytics-Solutions/spine
-copyright: Copyright &copy; 2026 Rahul Gurujala — MIT License
+copyright: Copyright &copy; 2026 Research Analytics Solutions — MIT License
 
 theme:
   name: material

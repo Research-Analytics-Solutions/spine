@@ -79,4 +79,4 @@ as a plugin.
 
 ## License
 
-[MIT](LICENSE) © 2026 Rahul Gurujala
+[MIT](LICENSE) © 2026 Research Analytics Solutions
