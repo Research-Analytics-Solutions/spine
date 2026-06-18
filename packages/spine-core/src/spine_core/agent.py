@@ -101,7 +101,10 @@ class Agent:
 
     async def run(self, input: str, *, session_id: str | None = None) -> Result:
         state = await self._start(input, session_id)
-        return await self._loop(state, Tracer(), time.monotonic())
+        await self.chain.on_run_start(state)
+        result = await self._loop(state, Tracer(), time.monotonic())
+        await self.chain.on_run_end(state, result)
+        return result
 
     async def stream(self, input: str, *, session_id: str | None = None) -> AsyncIterator[Any]:
         """Yield trace events live as the run executes; final ``Result`` lands
@@ -111,10 +114,13 @@ class Agent:
         sentinel = object()
         tracer = Tracer(listener=queue.put_nowait)
         started = time.monotonic()
+        await self.chain.on_run_start(state)
 
         async def runner() -> Result:
             try:
-                return await self._loop(state, tracer, started)
+                result = await self._loop(state, tracer, started)
+                await self.chain.on_run_end(state, result)
+                return result
             finally:
                 queue.put_nowait(sentinel)
 
@@ -145,6 +151,7 @@ class Agent:
         state.pending = None
         state.status = RunStatus.RUNNING
 
+        await self.chain.on_run_start(state)
         try:
             await self._apply_decision(state, tracer, pending, decision)
             deferred = state.scratch.pop("deferred_calls", [])
@@ -152,10 +159,12 @@ class Agent:
                 calls = [ToolCall.model_validate(c) for c in deferred]
                 await self._run_tool_calls(calls, state, tracer)
         except _Pause as pause:
-            return await self._pause(state, tracer, pause)
-
-        await self.checkpoint.put(state)
-        return await self._loop(state, tracer, started)
+            result = await self._pause(state, tracer, pause)
+        else:
+            await self.checkpoint.put(state)
+            result = await self._loop(state, tracer, started)
+        await self.chain.on_run_end(state, result)
+        return result
 
     # -- sync facade (generated on top; never a second engine) --------------
 

@@ -130,6 +130,31 @@ def test_sync_facade() -> None:
     assert result.answer == "sync works"
 
 
+async def test_run_scope_hooks_bracket_the_run() -> None:
+    from spine_core import Result, State
+
+    events: list[str] = []
+
+    class RecordingMW:
+        async def on_run_start(self, state: State) -> None:
+            events.append(f"start:{state.session_id}")
+
+        async def before_model(self, ctx: StepContext) -> None:
+            events.append("before_model")
+
+        async def on_run_end(self, state: State, result: Result) -> None:
+            events.append(f"end:{result.stopped_reason.value}")
+
+    agent = Agent(ScriptedProvider(text("ok")), middleware=[RecordingMW()])
+    result = await agent.run("hi")
+    # start brackets the whole run; end fires once, after the model work, with result
+    assert events[0].startswith("start:")
+    assert "before_model" in events
+    assert events[-1] == "end:final"
+    assert events.count(events[-1]) == 1
+    assert result.ok
+
+
 def test_unregistered_provider_errors() -> None:
     from spine_core import ProviderError
 

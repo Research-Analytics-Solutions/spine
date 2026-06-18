@@ -14,6 +14,7 @@ from spine_core.messages import Message, ModelResponse, ToolCall
 from spine_core.state import State
 
 if TYPE_CHECKING:
+    from spine_core.result import Result
     from spine_core.tools import Tool
 
 
@@ -72,6 +73,8 @@ class Middleware:
     hook only if the middleware defines it.
     """
 
+    async def on_run_start(self, state: State) -> None: ...
+    async def on_run_end(self, state: State, result: Result) -> None: ...
     async def before_model(self, ctx: StepContext) -> None: ...
     async def after_model(self, ctx: StepContext) -> None: ...
     async def before_tool(self, ctx: ToolContext) -> None: ...
@@ -89,6 +92,18 @@ class MiddlewareChain:
 
     def __init__(self, middlewares: list[Any] | None = None) -> None:
         self.middlewares: list[Any] = list(middlewares or [])
+
+    async def on_run_start(self, state: State) -> None:
+        for mw in self.middlewares:
+            hook = getattr(mw, "on_run_start", None)
+            if hook is not None:
+                await hook(state)
+
+    async def on_run_end(self, state: State, result: Result) -> None:
+        for mw in reversed(self.middlewares):
+            hook = getattr(mw, "on_run_end", None)
+            if hook is not None:
+                await hook(state, result)
 
     async def before_model(self, ctx: StepContext) -> None:
         for mw in self.middlewares:
