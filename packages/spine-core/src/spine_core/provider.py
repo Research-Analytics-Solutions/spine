@@ -65,6 +65,23 @@ def register_provider(scheme: str, factory: ProviderFactory) -> None:
     _REGISTRY[scheme] = factory
 
 
+def _load_provider_plugin(scheme: str) -> None:
+    """Lazily import the installed plugin whose entry-point name is ``scheme``.
+
+    Lets ``Agent("openai:...")`` work after ``pip install spinekit[openai]``
+    without an explicit ``import spine_providers`` — the adapter self-registers
+    on import.
+    """
+    import contextlib
+    from importlib.metadata import entry_points
+
+    for ep in entry_points(group="spine.plugins"):
+        if ep.name == scheme:
+            # A missing optional dep just means this adapter isn't usable here.
+            with contextlib.suppress(Exception):
+                ep.load()
+
+
 def resolve_provider(spec: str | Provider) -> Provider:
     """Resolve a provider instance or a ``"scheme:model"`` string."""
     if not isinstance(spec, str):
@@ -74,9 +91,13 @@ def resolve_provider(spec: str | Provider) -> Provider:
     scheme, _, model = spec.partition(":")
     factory = _REGISTRY.get(scheme)
     if factory is None:
+        _load_provider_plugin(scheme)  # try installed adapters before giving up
+        factory = _REGISTRY.get(scheme)
+    if factory is None:
         known = ", ".join(sorted(_REGISTRY)) or "<none installed>"
         raise ProviderError(
             f"no provider registered for scheme '{scheme}'. Installed: {known}. "
-            f"Install an adapter (e.g. `uv add spine-providers`) or pass a Provider instance."
+            f"Install an adapter (e.g. `pip install spinekit[{scheme}]`) or pass a "
+            f"Provider instance."
         )
     return factory(model)

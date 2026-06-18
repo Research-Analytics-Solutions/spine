@@ -153,3 +153,19 @@ async def test_openai_streaming_assembles_text_and_usage() -> None:
     assert final is not None
     assert final.message.content == "hello"
     assert final.usage.input_tokens == 5
+
+
+def test_scheme_auto_resolves_without_explicit_import() -> None:
+    # In a fresh interpreter (no `import spine_providers`), Agent("openai:...")
+    # must still resolve — resolve_provider lazily loads the matching plugin.
+    import subprocess
+    import sys
+
+    code = (
+        "from spine_core import Agent;"
+        "a = Agent('openai:gpt-4o-mini');"
+        "print(type(a.provider).__name__)"
+    )
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    assert out.returncode == 0, out.stderr
+    assert "OpenAIProvider" in out.stdout
