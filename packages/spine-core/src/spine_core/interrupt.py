@@ -7,7 +7,6 @@ the process because the resume token points at a durable checkpoint.
 
 from __future__ import annotations
 
-import secrets
 from typing import Any
 
 from spine_core.errors import SpineError
@@ -23,8 +22,3 @@ class Interrupt(SpineError):
     def __init__(self, payload: Any = None) -> None:
         super().__init__("run interrupted for human-in-the-loop")
         self.payload = payload
-
-
-def new_resume_token() -> str:
-    """Opaque, unguessable token mapping a paused run to its checkpoint."""
-    return secrets.token_urlsafe(24)

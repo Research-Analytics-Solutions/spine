@@ -23,7 +23,7 @@ from pydantic import BaseModel
 
 from spine_core.checkpoint import CheckpointStore, InMemoryCheckpointStore
 from spine_core.guards import Guards
-from spine_core.interrupt import Interrupt, new_resume_token
+from spine_core.interrupt import Interrupt
 from spine_core.messages import Message, ToolCall
 from spine_core.middleware import ErrorAction, MiddlewareChain, StepContext, ToolContext
 from spine_core.provider import Provider, resolve_provider
@@ -31,6 +31,10 @@ from spine_core.result import Result, StopReason
 from spine_core.state import PendingApproval, RunStatus, State
 from spine_core.tools import Tool
 from spine_core.trace import EventType, Tracer
+
+# Hard safety net: even if a middleware keeps asking to retry/fallback forever,
+# the kernel refuses to call the provider more than this many times per step.
+_MAX_PROVIDER_ATTEMPTS = 100
 
 
 def _new_session_id() -> str:
@@ -91,7 +95,6 @@ class Agent:
         self.checkpoint: CheckpointStore = checkpoint or InMemoryCheckpointStore()
         self.system = system
         self.name = name
-        self._resume_tokens: dict[str, str] = {}
         self.last_result: Result | None = None
 
     # -- public API ---------------------------------------------------------
@@ -124,13 +127,17 @@ class Agent:
         self.last_result = await task
 
     async def resume(self, token: str, decision: Any = "approve") -> Result:
-        """Continue a paused (HITL) run with a human decision."""
+        """Continue a paused (HITL) run with a human decision.
+
+        ``token`` is the run's session id (see :meth:`_pause`). Because it maps
+        directly to a durable checkpoint, a pause can outlive the process: a
+        fresh ``Agent`` sharing the same checkpoint store resumes it.
+        """
         from spine_core.errors import ResumeError
 
-        session_id = self._resume_tokens.pop(token, token)
-        state = await self.checkpoint.get(session_id)
+        state = await self.checkpoint.get(token)
         if state is None or state.pending is None:
-            raise ResumeError(f"no resumable run for token/session {token!r}")
+            raise ResumeError(f"no resumable run for token {token!r}")
 
         tracer = Tracer()
         started = time.monotonic()
@@ -190,7 +197,7 @@ class Agent:
 
             schemas = [t.schema for t in ctx.tools]
             tracer.emit(EventType.MODEL_CALL, step=state.step, messages=len(ctx.messages))
-            response = await self._complete(ctx, schemas, state, tracer)
+            response = await self._complete(ctx, schemas, state, tracer, started)
             if isinstance(response, Result):  # error path bubbled a Result
                 return response
 
@@ -223,10 +230,40 @@ class Agent:
             await self.checkpoint.put(state)
 
     async def _complete(
-        self, ctx: StepContext, schemas: list[dict[str, Any]], state: State, tracer: Tracer
+        self,
+        ctx: StepContext,
+        schemas: list[dict[str, Any]],
+        state: State,
+        tracer: Tracer,
+        started: float,
     ) -> Any:
-        """Call the provider, dispatching ``on_error`` actions (retry/fallback)."""
+        """Call the provider, dispatching ``on_error`` actions (retry/fallback).
+
+        The retry loop is itself bounded: the wall-clock guard is re-checked
+        before every attempt and a hard attempt cap prevents a misbehaving
+        ``on_error`` middleware from looping forever inside a single step.
+        """
         while True:
+            if (
+                self.guards.timeout_s is not None
+                and (time.monotonic() - started) >= self.guards.timeout_s
+            ):
+                tracer.emit(EventType.GUARD_TRIP, step=state.step, reason=StopReason.TIMEOUT.value)
+                state.status = RunStatus.DONE
+                await self.checkpoint.put(state)
+                return self._result(
+                    state, tracer, StopReason.TIMEOUT, answer=self._last_text(state)
+                )
+            if ctx.attempt >= _MAX_PROVIDER_ATTEMPTS:
+                state.status = RunStatus.ERROR
+                await self.checkpoint.put(state)
+                return self._result(
+                    state,
+                    tracer,
+                    StopReason.ERROR,
+                    error=f"provider retry cap ({_MAX_PROVIDER_ATTEMPTS}) exceeded",
+                )
+
             provider = ctx.provider or self.provider
             try:
                 return await provider.complete(ctx.messages, schemas)
@@ -305,12 +342,16 @@ class Agent:
         if pause.remaining:
             state.scratch["deferred_calls"] = [c.model_dump() for c in pause.remaining]
         state.status = RunStatus.INTERRUPTED
-        token = new_resume_token()
-        self._resume_tokens[token] = state.session_id
         await self.checkpoint.put(state)
         tracer.emit(EventType.INTERRUPT, step=state.step, mode=pause.mode, payload=pause.payload)
+        # The session id *is* the resume token: it points at the durable
+        # checkpoint, so the pause survives a process restart.
         return self._result(
-            state, tracer, StopReason.INTERRUPT, resume_token=token, interrupt=pause.payload
+            state,
+            tracer,
+            StopReason.INTERRUPT,
+            resume_token=state.session_id,
+            interrupt=pause.payload,
         )
 
     def _result(

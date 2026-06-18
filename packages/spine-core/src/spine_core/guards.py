@@ -26,6 +26,11 @@ class Guards(BaseModel):
         """Return the tripped :class:`StopReason`, or ``None`` to continue.
 
         Checked in priority order so the most specific budget wins the report.
+
+        Note: cost/token ceilings are enforced *before the next* step, so a run
+        can overshoot the budget by at most one model call (the one already in
+        flight when the limit was crossed). They are ceilings that stop runaway
+        spend, not exact-to-the-cent caps.
         """
         if self.max_depth is not None and state.depth > self.max_depth:
             return StopReason.MAX_DEPTH

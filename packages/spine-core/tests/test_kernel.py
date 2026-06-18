@@ -34,6 +34,9 @@ async def test_tool_call_then_answer() -> None:
     # user, assistant(toolcall), tool result, assistant(final)
     tool_msgs = [m for m in result.state.messages if m.role.value == "tool"]
     assert tool_msgs[0].content == "4"
+    # the *second* model call must actually see the tool result fed back in
+    second_call = provider.calls[1]
+    assert any(m.role.value == "tool" and m.content == "4" for m in second_call)
 
 
 async def test_arg_validation_feeds_error_back() -> None:
@@ -127,9 +130,49 @@ def test_sync_facade() -> None:
     assert result.answer == "sync works"
 
 
-@pytest.mark.parametrize("bad_model", ["unknown:model"])
-def test_unregistered_provider_errors(bad_model: str) -> None:
+def test_unregistered_provider_errors() -> None:
     from spine_core import ProviderError
 
     with pytest.raises(ProviderError):
-        Agent(bad_model)
+        Agent("unknown:model")
+
+
+async def test_retry_loop_is_bounded_by_timeout() -> None:
+    # A misbehaving middleware that retries forever must not loop forever: the
+    # wall-clock guard is re-checked inside the provider retry loop.
+    import anyio
+
+    class SlowFailing:
+        async def complete(self, messages, tools=None, **kw):  # type: ignore[no-untyped-def]
+            await anyio.sleep(0.02)
+            raise RuntimeError("still down")
+
+    class AlwaysRetry:
+        async def on_error(self, ctx: StepContext, err: Exception) -> ErrorAction:
+            return ErrorAction.RETRY
+
+    agent = Agent(SlowFailing(), middleware=[AlwaysRetry()], guards=Guards(timeout_s=0.05))
+    result = await agent.run("hang forever")
+    assert result.stopped_reason is StopReason.TIMEOUT
+
+
+async def test_retry_loop_is_bounded_by_attempt_cap() -> None:
+    # With no timeout, the hard attempt cap still stops an infinite retry.
+    class InstantFail:
+        def __init__(self) -> None:
+            self.attempts = 0
+
+        async def complete(self, messages, tools=None, **kw):  # type: ignore[no-untyped-def]
+            self.attempts += 1
+            raise RuntimeError("nope")
+
+    class AlwaysRetry:
+        async def on_error(self, ctx: StepContext, err: Exception) -> ErrorAction:
+            return ErrorAction.RETRY
+
+    provider = InstantFail()
+    agent = Agent(provider, middleware=[AlwaysRetry()], guards=Guards(timeout_s=None))
+    result = await agent.run("retry forever")
+    assert result.stopped_reason is StopReason.ERROR
+    assert "retry cap" in (result.error or "")
+    assert provider.attempts <= 101  # cap is 100, not unbounded
