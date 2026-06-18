@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Docs build output
+/site/
+
 # Tooling caches
 .hypothesis/
 .pytest_cache/

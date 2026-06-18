@@ -1,0 +1,102 @@
+site_name: Spine
+site_description: A lightweight, modular, protocol-native runtime for production AI agents.
+site_url: https://spine.dev/
+repo_url: https://github.com/spine/spine
+repo_name: spine/spine
+copyright: Apache-2.0
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+    - search.suggest
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - markdown-exec
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - packages/spine-core/src
+            - packages/spine-middleware/src
+            - packages/spine-backends/src
+            - packages/spine-providers/src
+            - packages/spine-eval/src
+            - packages/spine-orchestration/src
+            - packages/spine-mcp/src
+            - packages/spine-a2a/src
+            - packages/spine-otel/src
+          options:
+            show_root_heading: true
+            show_source: true
+            members_order: source
+            docstring_style: google
+            separate_signature: true
+            show_signature_annotations: true
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Installation: install.md
+      - Quickstart: quickstart.md
+  - Concepts:
+      - The kernel: concepts/kernel.md
+      - State & checkpoints: concepts/state.md
+      - Guards: concepts/guards.md
+      - Middleware: concepts/middleware.md
+      - Tools: concepts/tools.md
+      - Providers & models: concepts/providers.md
+      - Human-in-the-loop: concepts/hitl.md
+      - Tracing, streaming & replay: concepts/observability.md
+  - Guides:
+      - Models & any provider: guides/models.md
+      - Memory: guides/memory.md
+      - MCP tools: guides/mcp.md
+      - Multi-agent orchestration: guides/orchestration.md
+      - Evaluation: guides/eval.md
+      - Guardrails & safety: guides/guardrails.md
+      - Deployment & scale: guides/deployment.md
+  - Reference:
+      - Middleware catalog: reference/middleware.md
+      - CLI: reference/cli.md
+      - Plugin authoring: reference/plugins.md
+      - API reference: reference/api.md
+  - Architecture: architecture.md
