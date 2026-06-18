@@ -7,7 +7,7 @@ can find your way around.
 ## Setup
 
 ```bash
-git clone https://github.com/rahulgurujala/spine
+git clone https://github.com/Research-Analytics-Solutions/spine
 cd spine
 uv sync            # installs every workspace package + dev tools, editable
 ```

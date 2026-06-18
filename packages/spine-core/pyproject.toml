@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/rahulgurujala/spine"
+Homepage = "https://github.com/Research-Analytics-Solutions/spine"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/spine_core"]

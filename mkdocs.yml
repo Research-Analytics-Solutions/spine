@@ -1,8 +1,8 @@
 site_name: Spine
 site_description: A lightweight, modular, protocol-native runtime for production AI agents.
-site_url: https://rahulgurujala.github.io/spine/
-repo_url: https://github.com/rahulgurujala/spine
-repo_name: rahulgurujala/spine
+site_url: https://research-analytics-solutions.github.io/spine/
+repo_url: https://github.com/Research-Analytics-Solutions/spine
+repo_name: Research-Analytics-Solutions/spine
 copyright: Copyright &copy; 2026 Rahul Gurujala — MIT License
 
 theme:
@@ -45,7 +45,7 @@ extra_css:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/rahulgurujala/spine
+      link: https://github.com/Research-Analytics-Solutions/spine
 
 markdown_extensions:
   - admonition

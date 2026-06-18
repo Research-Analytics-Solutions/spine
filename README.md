@@ -9,17 +9,17 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/rahulgurujala/spine/actions/workflows/ci.yml"><img src="https://github.com/rahulgurujala/spine/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Research-Analytics-Solutions/spine/actions/workflows/ci.yml"><img src="https://github.com/Research-Analytics-Solutions/spine/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/python-3.12%2B-blue.svg" alt="Python 3.12+">
-  <a href="https://rahulgurujala.github.io/spine/"><img src="https://img.shields.io/badge/docs-mkdocs--material-526CFE.svg" alt="Docs"></a>
+  <a href="https://research-analytics-solutions.github.io/spine/"><img src="https://img.shields.io/badge/docs-mkdocs--material-526CFE.svg" alt="Docs"></a>
 </p>
 
 <p align="center">
-  <a href="https://rahulgurujala.github.io/spine/">Documentation</a> ·
-  <a href="https://rahulgurujala.github.io/spine/quickstart/">Quickstart</a> ·
-  <a href="https://rahulgurujala.github.io/spine/guides/examples/">Cookbook</a> ·
-  <a href="https://rahulgurujala.github.io/spine/contributing/">Contributing</a>
+  <a href="https://research-analytics-solutions.github.io/spine/">Documentation</a> ·
+  <a href="https://research-analytics-solutions.github.io/spine/quickstart/">Quickstart</a> ·
+  <a href="https://research-analytics-solutions.github.io/spine/guides/examples/">Cookbook</a> ·
+  <a href="https://research-analytics-solutions.github.io/spine/contributing/">Contributing</a>
 </p>
 
 ---
@@ -71,10 +71,10 @@ uv run mypy                  # strict type-check
 uv run mkdocs serve          # preview docs at http://127.0.0.1:8000
 ```
 
-See the [Contributing guide](https://rahulgurujala.github.io/spine/contributing/)
-to build your own [middleware](https://rahulgurujala.github.io/spine/develop/middleware/),
-[provider](https://rahulgurujala.github.io/spine/develop/provider/), or
-[backend](https://rahulgurujala.github.io/spine/develop/publish/) and publish it
+See the [Contributing guide](https://research-analytics-solutions.github.io/spine/contributing/)
+to build your own [middleware](https://research-analytics-solutions.github.io/spine/develop/middleware/),
+[provider](https://research-analytics-solutions.github.io/spine/develop/provider/), or
+[backend](https://research-analytics-solutions.github.io/spine/develop/publish/) and publish it
 as a plugin.
 
 ## License
