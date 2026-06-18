@@ -1,0 +1,43 @@
+name: Release
+
+# Publishes all Spine packages to PyPI via OIDC trusted publishing.
+# Trigger: push a version tag, e.g.  git tag v0.1.0 && git push origin v0.1.0
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for PyPI trusted publishing (OIDC)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Gate before publishing
+        run: |
+          uv sync
+          uv run ruff check .
+          uv run mypy
+          uv run pytest
+
+      - name: Build every workspace package
+        run: |
+          rm -rf dist
+          for pkg in packages/*/; do
+            echo "::group::build $pkg"
+            uv build "$pkg" --out-dir dist
+            echo "::endgroup::"
+          done
+          ls -la dist
+
+      - name: Publish to PyPI (trusted publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # No password/token: OIDC trusted publishing is used automatically.
