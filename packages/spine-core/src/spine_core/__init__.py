@@ -37,7 +37,7 @@ from spine_core.registry import (
 )
 from spine_core.result import Result, StopReason
 from spine_core.state import PendingApproval, RunStatus, State
-from spine_core.tools import Tool, tool
+from spine_core.tools import Tool, raw_tool, tool
 from spine_core.trace import EventType, TraceEvent, Tracer
 
 __version__ = "0.1.0"
@@ -82,6 +82,7 @@ __all__ = [
     "resolve_checkpoint",
     "resolve_middleware",
     "resolve_provider",
+    "raw_tool",
     "tool",
     "__version__",
 ]

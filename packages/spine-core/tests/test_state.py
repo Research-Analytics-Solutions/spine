@@ -45,6 +45,25 @@ def test_guards_all_none_never_trip() -> None:
     assert guards.check(state, elapsed_s=10**6) is None
 
 
+async def test_raw_tool_passes_args_through_to_callable() -> None:
+    from spine_core import raw_tool
+
+    seen: dict = {}
+
+    async def invoke(**kwargs: object) -> str:
+        seen.update(kwargs)
+        return "ran"
+
+    schema = {"type": "object", "properties": {"q": {"type": "string"}}, "required": ["q"]}
+    t = raw_tool("search", "Search.", schema, invoke)
+    assert t.parameters == schema
+    # no Python signature to validate against: args pass through untouched
+    assert t.validate({"q": "spine", "extra": 1}) == {"q": "spine", "extra": 1}
+    result = await t.call({"q": "spine"})
+    assert result == "ran"
+    assert seen == {"q": "spine"}
+
+
 def test_tool_schema_derived_from_type_hints() -> None:
     @tool
     def lookup(query: str, limit: int = 10) -> str:

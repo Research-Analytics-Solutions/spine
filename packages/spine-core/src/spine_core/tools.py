@@ -13,9 +13,19 @@ from dataclasses import dataclass, field
 from typing import Any, get_type_hints
 
 import anyio
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, ConfigDict, create_model
 
 from spine_core.errors import ToolValidationError
+
+
+class _AnyArgs(BaseModel):
+    """Permissive args model for tools whose schema isn't a Python signature.
+
+    Used by :func:`raw_tool` (MCP/A2A adapters): the kernel passes arguments
+    through unchanged and the remote server enforces its own schema.
+    """
+
+    model_config = ConfigDict(extra="allow")
 
 
 def _args_model(func: Callable[..., Any], name: str) -> type[BaseModel]:
@@ -71,6 +81,32 @@ class Tool:
             return await self.func(**validated)
         # Run sync tools off the event loop so they never block the kernel.
         return await anyio.to_thread.run_sync(lambda: self.func(**validated))
+
+
+def raw_tool(
+    name: str,
+    description: str,
+    parameters: dict[str, Any],
+    func: Callable[..., Any],
+    *,
+    approve: bool = False,
+    is_async: bool = True,
+) -> Tool:
+    """Build a :class:`Tool` from a ready-made JSON schema and callable.
+
+    For adapters (MCP, A2A) that already have a tool's schema and a remote
+    invoker, rather than a typed Python function. Argument validation is
+    delegated to the remote side; the LLM still sees ``parameters``.
+    """
+    return Tool(
+        name=name,
+        description=description,
+        parameters=parameters,
+        func=func,
+        approve=approve,
+        _model=_AnyArgs,
+        _is_async=is_async,
+    )
 
 
 def tool(
