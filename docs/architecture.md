@@ -21,20 +21,38 @@ These are binding constraints, not aspirations.
 
 ## The four planes
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  Developer API:  Agent() · @tool · middleware=[...]      │
-├─────────────────────────────────────────────────────────┤
-│  KERNEL (we own):  step loop · state · guards · tracer   │
-├─────────────────────────────────────────────────────────┤
-│  MIDDLEWARE (opt-in, chainable):  retry · guardrails ·   │
-│  compaction · cache · structured · memory · …            │
-├─────────────────────────────────────────────────────────┤
-│  BACKENDS (swappable, behind protocols):  memory ·       │
-│  checkpoint store · model providers                      │
-├─────────────────────────────────────────────────────────┤
-│  ADAPTERS (bridge standards):  MCP · A2A · OTLP          │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    API["<b>Developer API</b><br/><code>Agent()</code> · <code>@tool</code> · <code>middleware=[...]</code>"]
+
+    subgraph KERNEL ["🧠 &nbsp;KERNEL &nbsp;·&nbsp; we own"]
+        direction LR
+        K1[Step loop] ~~~ K2[State] ~~~ K3[Guards] ~~~ K4[Tracer]
+    end
+
+    subgraph MW ["🧩 &nbsp;MIDDLEWARE &nbsp;·&nbsp; opt-in, chainable"]
+        direction LR
+        M1[Retry] ~~~ M2[Guardrails] ~~~ M3[Cache] ~~~ M4[Compaction] ~~~ M5[Memory]
+    end
+
+    subgraph BE ["🔌 &nbsp;BACKENDS &nbsp;·&nbsp; swappable, behind protocols"]
+        direction LR
+        B1[Providers] ~~~ B2[Checkpoints] ~~~ B3[Memory stores]
+    end
+
+    subgraph AD ["🌐 &nbsp;ADAPTERS &nbsp;·&nbsp; bridge open standards"]
+        direction LR
+        A1[MCP] ~~~ A2[A2A] ~~~ A3[OTLP]
+    end
+
+    API --> KERNEL --> MW --> BE --> AD
+
+    classDef api fill:#eef2ff,stroke:#6366f1,stroke-width:1.5px,color:#1e1b4b;
+    classDef kernel fill:#e0e7ff,stroke:#4f46e5,stroke-width:2px,color:#1e1b4b;
+    classDef plane fill:#f8fafc,stroke:#94a3b8,color:#0f172a;
+    class API api;
+    class KERNEL kernel;
+    class MW,BE,AD plane;
 ```
 
 The kernel never *constructs* behavior; it *invokes hooks*. Middlewares attach to
