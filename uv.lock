@@ -8,6 +8,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "spine-backends",
     "spine-cli",
     "spine-core",
     "spine-middleware",
@@ -832,6 +833,21 @@ wheels = [
 ]
 
 [[package]]
+name = "spine-backends"
+version = "0.1.0"
+source = { editable = "packages/spine-backends" }
+dependencies = [
+    { name = "anyio" },
+    { name = "spine-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anyio", specifier = ">=4.4" },
+    { name = "spine-core", editable = "packages/spine-core" },
+]
+
+[[package]]
 name = "spine-cli"
 version = "0.1.0"
 source = { editable = "packages/spine-cli" }
@@ -929,6 +945,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
+    { name = "spine-backends" },
     { name = "spine-cli" },
     { name = "spine-core" },
     { name = "spine-middleware" },
@@ -945,6 +962,7 @@ dev = [
     { name = "pytest", specifier = ">=8.2" },
     { name = "pytest-asyncio", specifier = ">=0.24" },
     { name = "ruff", specifier = ">=0.6" },
+    { name = "spine-backends", editable = "packages/spine-backends" },
     { name = "spine-cli", editable = "packages/spine-cli" },
     { name = "spine-core", editable = "packages/spine-core" },
     { name = "spine-middleware", editable = "packages/spine-middleware" },

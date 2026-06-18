@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spine-backends"
+version = "0.1.0"
+description = "Durable storage backends for Spine (SQLite checkpoint, …)."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+authors = [{ name = "Spine" }]
+dependencies = [
+    "spine-core",
+    "anyio>=4.4",
+]
+
+[project.entry-points."spine.plugins"]
+backend_sqlite = "spine_backends:SQLiteCheckpoint"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spine_backends"]
+
+[tool.uv.sources]
+spine-core = { workspace = true }
