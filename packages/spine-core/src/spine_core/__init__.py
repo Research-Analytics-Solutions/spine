@@ -18,7 +18,7 @@ from spine_core.errors import (
 )
 from spine_core.guards import Guards
 from spine_core.interrupt import Interrupt
-from spine_core.memory import Memory, MemoryHit, MemoryRecord
+from spine_core.memory import Embedder, Memory, MemoryHit, MemoryRecord
 from spine_core.messages import (
     Message,
     ModelResponse,
@@ -60,6 +60,7 @@ __all__ = [
     "InMemoryCheckpointStore",
     "ErrorAction",
     "EventType",
+    "Embedder",
     "Guards",
     "Interrupt",
     "Memory",

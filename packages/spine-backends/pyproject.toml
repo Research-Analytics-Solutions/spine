@@ -24,6 +24,8 @@ backend_sqlite = "spine_backends:SQLiteCheckpoint"
 backend_redis = "spine_backends:RedisCheckpoint"
 backend_postgres = "spine_backends:PostgresCheckpoint"
 memory_vector = "spine_backends:InMemoryVectorMemory"
+memory_buffer = "spine_backends:BufferMemory"
+memory_pgvector = "spine_backends:PgVectorMemory"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/spine_backends"]

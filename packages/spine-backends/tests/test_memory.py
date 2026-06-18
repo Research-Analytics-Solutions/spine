@@ -38,3 +38,51 @@ async def test_registry_resolves_vector_memory() -> None:
     mem = resolve_memory("vector", dim=128)
     assert isinstance(mem, InMemoryVectorMemory)
     assert mem.dim == 128
+
+
+async def test_custom_embedder_is_used() -> None:
+    from spine_backends import InMemoryVectorMemory
+
+    class TagEmbedder:
+        """Embeds 'a'->[1,0], everything else ->[0,1]."""
+
+        async def embed(self, text: str) -> list[float]:
+            return [1.0, 0.0] if "apple" in text else [0.0, 1.0]
+
+    mem = InMemoryVectorMemory(embedder=TagEmbedder())
+    await mem.save("apple pie recipe")
+    await mem.save("car engine repair")
+    hits = await mem.search("fresh apple", k=1)
+    assert "apple" in hits[0].record.content
+    assert hits[0].score == 1.0
+
+
+async def test_buffer_memory_returns_recent() -> None:
+    from spine_backends import BufferMemory
+
+    mem = BufferMemory()
+    for i in range(5):
+        await mem.save(f"note {i}", session_id="s")
+    hits = await mem.search("anything", k=2, session_id="s")
+    assert [h.record.content for h in hits] == ["note 4", "note 3"]
+
+
+async def test_openai_embedder_with_fake_client() -> None:
+    from types import SimpleNamespace
+
+    from spine_backends import OpenAIEmbedder
+
+    class FakeEmbeddings:
+        async def create(self, *, model, input):  # type: ignore[no-untyped-def]
+            return SimpleNamespace(data=[SimpleNamespace(embedding=[0.1, 0.2, 0.3])])
+
+    client = SimpleNamespace(embeddings=FakeEmbeddings())
+    embedder = OpenAIEmbedder(client=client)
+    assert await embedder.embed("hi") == [0.1, 0.2, 0.3]
+
+
+def test_registry_resolves_buffer_and_pgvector() -> None:
+    import spine_backends  # noqa: F401
+    from spine_core import list_memories
+
+    assert {"vector", "buffer", "pgvector"} <= set(list_memories())

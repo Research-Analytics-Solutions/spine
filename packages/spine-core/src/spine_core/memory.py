@@ -27,6 +27,13 @@ class MemoryHit(BaseModel):
 
 
 @runtime_checkable
+class Embedder(Protocol):
+    """Turns text into a vector. Async so API-backed embedders fit too."""
+
+    async def embed(self, text: str) -> list[float]: ...
+
+
+@runtime_checkable
 class Memory(Protocol):
     """Persist and semantically recall snippets across sessions."""
 
