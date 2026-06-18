@@ -134,3 +134,4 @@ nav:
       - Plugin authoring: reference/plugins.md
       - API reference: reference/api.md
   - Architecture: architecture.md
+  - Benchmark: benchmark.md
