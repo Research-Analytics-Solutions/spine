@@ -1,0 +1,43 @@
+[project]
+name = "spine-workspace"
+version = "0"
+description = "Spine monorepo workspace (dev tooling only; real packages live in packages/)."
+requires-python = ">=3.12"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+spine-core = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "spine-core",
+    "pytest>=8.2",
+    "pytest-asyncio>=0.24",
+    "hypothesis>=6.100",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["packages"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["packages/spine-core/src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["spine_core"]
+mypy_path = "packages/spine-core/src"
