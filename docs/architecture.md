@@ -47,9 +47,11 @@ flowchart TB
 
     API --> KERNEL --> MW --> BE --> AD
 
-    classDef api fill:#eef2ff,stroke:#6366f1,stroke-width:1.5px,color:#1e1b4b;
-    classDef kernel fill:#e0e7ff,stroke:#4f46e5,stroke-width:2px,color:#1e1b4b;
-    classDef plane fill:#f8fafc,stroke:#94a3b8,color:#0f172a;
+    %% stroke-only accents — no fill/text-color overrides, so text follows the
+    %% Material theme and stays readable in both light and dark mode.
+    classDef api stroke:#6366f1,stroke-width:2px;
+    classDef kernel stroke:#4f46e5,stroke-width:2.5px;
+    classDef plane stroke:#94a3b8,stroke-width:1.5px;
     class API api;
     class KERNEL kernel;
     class MW,BE,AD plane;
