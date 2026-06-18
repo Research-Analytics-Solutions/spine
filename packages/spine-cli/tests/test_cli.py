@@ -98,3 +98,77 @@ def test_config_unset_env_raises(tmp_path: Path) -> None:
     cfg.write_text('[spine]\n[spine.plugins.x]\nkey = "${DEFINITELY_UNSET_VAR_XYZ}"\n')
     with pytest.raises(ConfigError):
         load_config(cfg)
+
+
+_TOOLS_PKG = '''\
+from spine_core import tool
+
+
+@tool
+async def echo(text: str) -> str:
+    """Echo."""
+    return text
+'''
+
+
+def _config_project(
+    tmp_path: Path, *, model: str, chain: str = "[]", checkpoint: str = "memory"
+) -> Path:
+    proj = tmp_path / "proj"
+    (proj / "tools").mkdir(parents=True)
+    (proj / "tools" / "__init__.py").write_text(_TOOLS_PKG)
+    (proj / "spine.toml").write_text(
+        f'[spine]\ndefault_model = "{model}"\n'
+        f"[spine.middleware]\nchain = {chain}\n"
+        f'[spine.backends]\ncheckpoint = "{checkpoint}"\n'
+    )
+    return proj
+
+
+def test_build_agent_applies_config(tmp_path: Path) -> None:
+    from spine_cli.builder import build_agent
+
+    proj = _config_project(tmp_path, model="anthropic:x", chain='["Retry", "LoopGuard"]')
+    config = load_config(proj / "spine.toml")
+    agent = build_agent(config, proj)
+
+    # middleware chain resolved from names; tools auto-discovered
+    assert [type(m).__name__ for m in agent.chain.middlewares] == ["Retry", "LoopGuard"]
+    assert "echo" in agent.tools
+
+
+def test_chat_runs_config_agent_and_records_trace(tmp_path: Path) -> None:
+    from spine_core.provider import register_provider
+    from spine_core.testing import ScriptedProvider, text
+
+    register_provider("faketest", lambda model: ScriptedProvider(text("hello from config")))
+    proj = _config_project(tmp_path, model="faketest:x", chain='["Retry"]')
+
+    result = runner.invoke(app, ["chat", "hi there", "--path", str(proj)])
+    assert result.exit_code == 0, result.stdout
+    assert "hello from config" in result.stdout
+    assert list((proj / ".spine" / "traces").glob("*.json"))
+
+
+def test_trace_lists_and_inspects(tmp_path: Path) -> None:
+    from spine_core.provider import register_provider
+    from spine_core.testing import ScriptedProvider, text
+
+    register_provider("faketest2", lambda model: ScriptedProvider(text("answer")))
+    proj = _config_project(tmp_path, model="faketest2:x")
+    runner.invoke(app, ["chat", "hi", "--path", str(proj)])
+
+    listing = runner.invoke(app, ["trace", "--path", str(proj)])
+    assert listing.exit_code == 0
+    session = next((proj / ".spine" / "traces").glob("*.json")).stem
+
+    detail = runner.invoke(app, ["trace", session, "--path", str(proj)])
+    assert detail.exit_code == 0
+    assert "model_call" in detail.stdout or "step_start" in detail.stdout
+
+
+def test_doctor_flags_unknown_middleware(tmp_path: Path) -> None:
+    proj = _config_project(tmp_path, model="anthropic:x", chain='["NoSuchMiddleware"]')
+    result = runner.invoke(app, ["doctor", "--path", str(proj)])
+    assert result.exit_code == 1
+    assert "NoSuchMiddleware" in result.stdout

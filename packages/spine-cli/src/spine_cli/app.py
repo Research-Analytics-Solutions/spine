@@ -135,6 +135,23 @@ def doctor(path: Path = typer.Option(Path("."), help="Project root.")) -> None:
     if scheme == "anthropic" and not os.environ.get("ANTHROPIC_API_KEY"):
         rows.append(("ANTHROPIC_API_KEY", "[yellow]warn[/]", "unset (needed to call the model)"))
 
+    from spine_core import list_checkpoints, list_middleware
+
+    known_mw = set(list_middleware())
+    for name in config.middleware.chain:
+        if name in known_mw:
+            rows.append((f"mw:{name}", "[green]ok[/]", "registered"))
+        else:
+            failed = True
+            rows.append((f"mw:{name}", "[red]fail[/]", "not registered (install its plugin)"))
+
+    backend = config.backends.checkpoint
+    if backend and backend not in set(list_checkpoints()):
+        failed = True
+        rows.append((f"checkpoint:{backend}", "[red]fail[/]", "backend not registered"))
+    elif backend:
+        rows.append((f"checkpoint:{backend}", "[green]ok[/]", "registered"))
+
     _render_doctor(rows)
     if failed:
         raise typer.Exit(1)
@@ -151,6 +168,79 @@ def plugin_list() -> None:
     for plugin in plugins:
         origin = "first-party" if plugin.first_party else "[yellow]third-party[/]"
         table.add_row(plugin.name, plugin.value, origin)
+    console.print(table)
+
+
+@app.command()
+def chat(
+    input: str = typer.Argument(..., help="The input message."),
+    path: Path = typer.Option(Path("."), help="Project root."),
+) -> None:
+    """Run the agent described by spine.toml (model, guards, middleware, backend)."""
+    from spine_cli.builder import build_agent, save_trace
+
+    config_path = find_config(path)
+    if config_path is None:
+        console.print("[red]error:[/] no spine.toml found")
+        raise typer.Exit(1)
+    try:
+        config = load_config(config_path)
+    except ConfigError as exc:
+        console.print(f"[red]error:[/] {exc}")
+        raise typer.Exit(1) from exc
+
+    project_root = config_path.parent
+    agent = build_agent(config, project_root)
+    result = agent.run_sync(input)
+    trace_path = save_trace(project_root, result)
+
+    if result.stopped_reason.value == "error":
+        console.print(f"[red]run failed:[/] {result.error}")
+        raise typer.Exit(1)
+    console.print(result.answer or f"[yellow]stopped: {result.stopped_reason.value}[/]")
+    console.print(
+        f"\n[dim]stopped: {result.stopped_reason.value} · steps: {result.state.step} · "
+        f"${result.usage.cost_usd:.4f} · {result.usage.total_tokens} tok · "
+        f"trace: {trace_path}[/]"
+    )
+
+
+@app.command()
+def trace(
+    session: str = typer.Argument(None, help="Session id to inspect; omit to list recent."),
+    path: Path = typer.Option(Path("."), help="Project root."),
+) -> None:
+    """Inspect a recorded run trace (saved by `spine chat`)."""
+    import json
+
+    from spine_cli.builder import TRACES_DIR
+
+    project_root = _project_root(path)
+    traces_dir = project_root / TRACES_DIR
+    if not traces_dir.is_dir():
+        console.print("[dim]no traces recorded yet[/]")
+        return
+
+    if session is None:
+        files = sorted(traces_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+        table = Table("session", "stopped", "events")
+        for file in files[:20]:
+            data = json.loads(file.read_text())
+            table.add_row(
+                file.stem, data.get("stopped_reason", "?"), str(len(data.get("events", [])))
+            )
+        console.print(table)
+        return
+
+    file = traces_dir / f"{session}.json"
+    if not file.is_file():
+        console.print(f"[red]error:[/] no trace for session {session!r}")
+        raise typer.Exit(1)
+    data = json.loads(file.read_text())
+    table = Table("seq", "step", "type", "detail")
+    for event in data.get("events", []):
+        detail = ", ".join(f"{k}={v}" for k, v in event.get("data", {}).items())
+        table.add_row(str(event.get("seq")), str(event.get("step")), event.get("type", ""), detail)
     console.print(table)
 
 

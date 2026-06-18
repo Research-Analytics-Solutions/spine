@@ -33,6 +33,7 @@ class BackendsConfig(BaseModel):
 
 class SpineConfig(BaseModel):
     default_model: str = "anthropic:claude-sonnet-4-6"
+    system: str | None = None
     guards: Guards = Field(default_factory=Guards)
     middleware: MiddlewareConfig = Field(default_factory=MiddlewareConfig)
     backends: BackendsConfig = Field(default_factory=BackendsConfig)

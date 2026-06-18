@@ -17,6 +17,8 @@ requires-python = ">=3.12"
 dependencies = [
     "spine-core",
     "spine-providers",
+    "spine-middleware",
+    "spine-backends",
 ]
 """
 
@@ -84,7 +86,9 @@ A Spine agent. Scaffolded with `spine init`.
 ```bash
 uv sync
 export ANTHROPIC_API_KEY=sk-...
-uv run spine run assistant "say hello"
+uv run spine run assistant "say hello"   # the agent defined in agents/
+uv run spine chat "say hello"            # the agent built from spine.toml
+uv run spine trace                        # inspect recorded run traces
 uv run spine doctor
 ```
 """
