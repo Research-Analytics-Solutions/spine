@@ -15,8 +15,15 @@ dependencies = [
     "anyio>=4.4",
 ]
 
+[project.optional-dependencies]
+redis = ["redis>=5.0"]
+postgres = ["asyncpg>=0.29"]
+
 [project.entry-points."spine.plugins"]
 backend_sqlite = "spine_backends:SQLiteCheckpoint"
+backend_redis = "spine_backends:RedisCheckpoint"
+backend_postgres = "spine_backends:PostgresCheckpoint"
+memory_vector = "spine_backends:InMemoryVectorMemory"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/spine_backends"]
