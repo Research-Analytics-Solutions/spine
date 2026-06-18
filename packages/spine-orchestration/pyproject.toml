@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spine-orchestration"
+version = "0.1.0"
+description = "Multi-agent orchestration patterns for Spine (sequential, supervisor, handoff)."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+authors = [{ name = "Spine" }]
+dependencies = ["spine-core"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spine_orchestration"]
+
+[tool.uv.sources]
+spine-core = { workspace = true }

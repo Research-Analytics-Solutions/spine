@@ -19,6 +19,7 @@ spine-middleware = { workspace = true }
 spine-backends = { workspace = true }
 spine-mcp = { workspace = true }
 spine-eval = { workspace = true }
+spine-orchestration = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -30,6 +31,7 @@ dev = [
     "spine-backends",
     "spine-mcp",
     "spine-eval",
+    "spine-orchestration",
     "pytest>=8.2",
     "pytest-asyncio>=0.24",
     "hypothesis>=6.100",
@@ -54,6 +56,7 @@ src = [
     "packages/spine-backends/src",
     "packages/spine-mcp/src",
     "packages/spine-eval/src",
+    "packages/spine-orchestration/src",
 ]
 
 [tool.ruff.lint]
@@ -66,8 +69,8 @@ select = ["E", "F", "I", "UP", "B", "ASYNC", "SIM"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-packages = ["spine_core", "spine_providers", "spine_cli", "spine_otel", "spine_middleware", "spine_backends", "spine_mcp", "spine_eval"]
-mypy_path = "packages/spine-core/src:packages/spine-providers/src:packages/spine-cli/src:packages/spine-otel/src:packages/spine-middleware/src:packages/spine-backends/src:packages/spine-mcp/src:packages/spine-eval/src"
+packages = ["spine_core", "spine_providers", "spine_cli", "spine_otel", "spine_middleware", "spine_backends", "spine_mcp", "spine_eval", "spine_orchestration"]
+mypy_path = "packages/spine-core/src:packages/spine-providers/src:packages/spine-cli/src:packages/spine-otel/src:packages/spine-middleware/src:packages/spine-backends/src:packages/spine-mcp/src:packages/spine-eval/src:packages/spine-orchestration/src"
 
 [[tool.mypy.overrides]]
 module = ["anthropic.*", "openai.*", "opentelemetry.*", "mcp.*", "yaml", "redis.*", "asyncpg.*"]
