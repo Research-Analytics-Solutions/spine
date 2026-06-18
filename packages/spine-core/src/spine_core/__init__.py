@@ -18,6 +18,7 @@ from spine_core.errors import (
 )
 from spine_core.guards import Guards
 from spine_core.interrupt import Interrupt
+from spine_core.memory import Memory, MemoryHit, MemoryRecord
 from spine_core.messages import Message, ModelResponse, Role, ToolCall, Usage
 from spine_core.middleware import (
     ErrorAction,
@@ -29,10 +30,13 @@ from spine_core.middleware import (
 from spine_core.provider import Provider, register_provider, resolve_provider
 from spine_core.registry import (
     list_checkpoints,
+    list_memories,
     list_middleware,
     register_checkpoint,
+    register_memory,
     register_middleware,
     resolve_checkpoint,
+    resolve_memory,
     resolve_middleware,
 )
 from spine_core.result import Result, StopReason
@@ -50,6 +54,9 @@ __all__ = [
     "EventType",
     "Guards",
     "Interrupt",
+    "Memory",
+    "MemoryHit",
+    "MemoryRecord",
     "Message",
     "Middleware",
     "MiddlewareChain",
@@ -75,11 +82,14 @@ __all__ = [
     "Tracer",
     "Usage",
     "list_checkpoints",
+    "list_memories",
     "list_middleware",
     "register_checkpoint",
+    "register_memory",
     "register_middleware",
     "register_provider",
     "resolve_checkpoint",
+    "resolve_memory",
     "resolve_middleware",
     "resolve_provider",
     "raw_tool",

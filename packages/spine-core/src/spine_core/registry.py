@@ -13,12 +13,15 @@ from typing import Any
 
 from spine_core.checkpoint import CheckpointStore, InMemoryCheckpointStore
 from spine_core.errors import SpineError
+from spine_core.memory import Memory
 
 MiddlewareFactory = Callable[..., Any]
 CheckpointFactory = Callable[..., CheckpointStore]
+MemoryFactory = Callable[..., Memory]
 
 _MIDDLEWARE: dict[str, MiddlewareFactory] = {}
 _CHECKPOINT: dict[str, CheckpointFactory] = {}
+_MEMORY: dict[str, MemoryFactory] = {}
 
 
 def register_middleware(name: str, factory: MiddlewareFactory) -> None:
@@ -51,6 +54,22 @@ def resolve_checkpoint(name: str, **config: Any) -> CheckpointStore:
 
 def list_checkpoints() -> list[str]:
     return sorted(_CHECKPOINT)
+
+
+def register_memory(name: str, factory: MemoryFactory) -> None:
+    _MEMORY[name] = factory
+
+
+def resolve_memory(name: str, **config: Any) -> Memory:
+    factory = _MEMORY.get(name)
+    if factory is None:
+        known = ", ".join(sorted(_MEMORY)) or "<none installed>"
+        raise SpineError(f"no memory backend registered as '{name}'. Installed: {known}")
+    return factory(**config)
+
+
+def list_memories() -> list[str]:
+    return sorted(_MEMORY)
 
 
 # Built-in: the in-memory store ships with the kernel.

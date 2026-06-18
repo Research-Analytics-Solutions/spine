@@ -15,6 +15,7 @@ from spine_middleware.cost import CostTracking
 from spine_middleware.fallback import ModelFallback
 from spine_middleware.guardrails import ContentPolicy, PIIRedaction, PromptInjectionScreen
 from spine_middleware.loopguard import LoopGuard
+from spine_middleware.memory import MemoryRecall
 from spine_middleware.reliability import CircuitBreaker, Idempotency, RateLimit
 from spine_middleware.replay import Recorder, Replayer
 from spine_middleware.retry import Retry
@@ -29,6 +30,7 @@ __all__ = [
     "CostTracking",
     "Idempotency",
     "LoopGuard",
+    "MemoryRecall",
     "ModelFallback",
     "PIIRedaction",
     "PromptInjectionScreen",
