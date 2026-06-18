@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from spine_core.agent import Agent
 from spine_core.checkpoint import CheckpointStore, InMemoryCheckpointStore
+from spine_core.control import StopRun
 from spine_core.errors import (
     ProviderError,
     ResumeError,
@@ -26,6 +27,14 @@ from spine_core.middleware import (
     ToolContext,
 )
 from spine_core.provider import Provider, register_provider, resolve_provider
+from spine_core.registry import (
+    list_checkpoints,
+    list_middleware,
+    register_checkpoint,
+    register_middleware,
+    resolve_checkpoint,
+    resolve_middleware,
+)
 from spine_core.result import Result, StopReason
 from spine_core.state import PendingApproval, RunStatus, State
 from spine_core.tools import Tool, tool
@@ -56,6 +65,7 @@ __all__ = [
     "State",
     "StepContext",
     "StopReason",
+    "StopRun",
     "Tool",
     "ToolCall",
     "ToolContext",
@@ -64,7 +74,13 @@ __all__ = [
     "TraceEvent",
     "Tracer",
     "Usage",
+    "list_checkpoints",
+    "list_middleware",
+    "register_checkpoint",
+    "register_middleware",
     "register_provider",
+    "resolve_checkpoint",
+    "resolve_middleware",
     "resolve_provider",
     "tool",
     "__version__",

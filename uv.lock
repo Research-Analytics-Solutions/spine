@@ -10,6 +10,7 @@ resolution-markers = [
 members = [
     "spine-cli",
     "spine-core",
+    "spine-middleware",
     "spine-otel",
     "spine-providers",
     "spine-workspace",
@@ -863,6 +864,21 @@ requires-dist = [
 ]
 
 [[package]]
+name = "spine-middleware"
+version = "0.1.0"
+source = { editable = "packages/spine-middleware" }
+dependencies = [
+    { name = "anyio" },
+    { name = "spine-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anyio", specifier = ">=4.4" },
+    { name = "spine-core", editable = "packages/spine-core" },
+]
+
+[[package]]
 name = "spine-otel"
 version = "0.1.0"
 source = { editable = "packages/spine-otel" }
@@ -915,6 +931,7 @@ dev = [
     { name = "ruff" },
     { name = "spine-cli" },
     { name = "spine-core" },
+    { name = "spine-middleware" },
     { name = "spine-otel" },
     { name = "spine-providers" },
 ]
@@ -930,6 +947,7 @@ dev = [
     { name = "ruff", specifier = ">=0.6" },
     { name = "spine-cli", editable = "packages/spine-cli" },
     { name = "spine-core", editable = "packages/spine-core" },
+    { name = "spine-middleware", editable = "packages/spine-middleware" },
     { name = "spine-otel", editable = "packages/spine-otel" },
     { name = "spine-providers", editable = "packages/spine-providers" },
 ]

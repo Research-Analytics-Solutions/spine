@@ -23,6 +23,8 @@ class StopReason(StrEnum):
     MAX_TOKENS = "max_tokens"
     TIMEOUT = "timeout"
     MAX_DEPTH = "max_depth"
+    LOOP = "loop"  # repeated action detected (LoopGuard)
+    GUARDRAIL = "guardrail"  # blocked by an input/output policy
     INTERRUPT = "interrupt"  # paused for human-in-the-loop; resumable
     ERROR = "error"
     CANCELLED = "cancelled"

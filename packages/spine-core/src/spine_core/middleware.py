@@ -34,7 +34,16 @@ class StepContext:
     ``response`` after the model returns.
     """
 
-    __slots__ = ("state", "messages", "tools", "response", "provider", "attempt", "extra")
+    __slots__ = (
+        "state",
+        "messages",
+        "tools",
+        "response",
+        "provider",
+        "attempt",
+        "force_continue",
+        "extra",
+    )
 
     def __init__(
         self,
@@ -49,6 +58,9 @@ class StepContext:
         self.provider = provider
         self.response: ModelResponse | None = None
         self.attempt = 0
+        # Set by a middleware (e.g. StructuredOutput) to force another turn even
+        # when the model produced no tool calls — used to drive a repair loop.
+        self.force_continue = False
         self.extra: dict[str, Any] = {}
 
 

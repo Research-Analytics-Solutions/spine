@@ -22,6 +22,7 @@ import anyio
 from pydantic import BaseModel
 
 from spine_core.checkpoint import CheckpointStore, InMemoryCheckpointStore
+from spine_core.control import StopRun
 from spine_core.guards import Guards
 from spine_core.interrupt import Interrupt
 from spine_core.messages import Message, ToolCall
@@ -202,39 +203,44 @@ class Agent:
             tracer.emit(EventType.STEP_START, step=state.step)
 
             ctx = StepContext(state, state.messages, list(self.tools.values()), self.provider)
-            await self.chain.before_model(ctx)
-
-            schemas = [t.schema for t in ctx.tools]
-            tracer.emit(EventType.MODEL_CALL, step=state.step, messages=len(ctx.messages))
-            response = await self._complete(ctx, schemas, state, tracer, started)
-            if isinstance(response, Result):  # error path bubbled a Result
-                return response
-
-            ctx.response = response
-            state.add_usage(response.usage)
-            await self.chain.after_model(ctx)
-            response = ctx.response  # middleware may have replaced it
-
-            msg = response.message
-            state.add_message(msg)
-            tracer.emit(
-                EventType.MODEL_RESPONSE,
-                step=state.step,
-                tool_calls=[c.name for c in msg.tool_calls],
-                cost_usd=state.usage.cost_usd,
-                tokens=state.usage.total_tokens,
-            )
-
-            if not msg.tool_calls:
-                state.status = RunStatus.DONE
-                tracer.emit(EventType.FINAL, step=state.step)
-                await self.checkpoint.put(state)
-                return self._result(state, tracer, StopReason.FINAL, answer=msg.content)
-
             try:
-                await self._run_tool_calls(msg.tool_calls, state, tracer)
+                await self.chain.before_model(ctx)
+
+                schemas = [t.schema for t in ctx.tools]
+                tracer.emit(EventType.MODEL_CALL, step=state.step, messages=len(ctx.messages))
+                response = await self._complete(ctx, schemas, state, tracer, started)
+                if isinstance(response, Result):  # error path bubbled a Result
+                    return response
+
+                ctx.response = response
+                # after_model runs *before* usage is banked so a cost-tracking
+                # middleware can rewrite response.usage and have it count.
+                await self.chain.after_model(ctx)
+                response = ctx.response
+                state.add_usage(response.usage)
+
+                msg = response.message
+                state.add_message(msg)
+                tracer.emit(
+                    EventType.MODEL_RESPONSE,
+                    step=state.step,
+                    tool_calls=[c.name for c in msg.tool_calls],
+                    cost_usd=state.usage.cost_usd,
+                    tokens=state.usage.total_tokens,
+                )
+
+                if not msg.tool_calls and not ctx.force_continue:
+                    state.status = RunStatus.DONE
+                    tracer.emit(EventType.FINAL, step=state.step)
+                    await self.checkpoint.put(state)
+                    return self._result(state, tracer, StopReason.FINAL, answer=msg.content)
+
+                if msg.tool_calls:
+                    await self._run_tool_calls(msg.tool_calls, state, tracer)
             except _Pause as pause:
                 return await self._pause(state, tracer, pause)
+            except StopRun as stop:
+                return await self._stop_run(state, tracer, stop)
 
             await self.checkpoint.put(state)
 
@@ -345,6 +351,20 @@ class Agent:
         else:  # manual interrupt: the decision *is* the tool result
             content = _stringify(decision)
         state.add_message(Message.tool(content, call.id, call.name))
+
+    async def _stop_run(self, state: State, tracer: Tracer, stop: StopRun) -> Result:
+        """Convert a middleware ``StopRun`` into a structured Result."""
+        is_error = stop.reason is StopReason.ERROR
+        tracer.emit(EventType.GUARD_TRIP, step=state.step, reason=stop.reason.value)
+        state.status = RunStatus.ERROR if is_error else RunStatus.DONE
+        await self.checkpoint.put(state)
+        return self._result(
+            state,
+            tracer,
+            stop.reason,
+            answer=None if is_error else (stop.message or None),
+            error=stop.message if is_error else None,
+        )
 
     async def _pause(self, state: State, tracer: Tracer, pause: _Pause) -> Result:
         state.pending = PendingApproval(call=pause.call, mode=pause.mode, payload=pause.payload)

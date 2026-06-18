@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spine-middleware"
+version = "0.1.0"
+description = "Spine V1 middleware suite: retry, fallback, loop guard, cost, compaction, structured output."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+authors = [{ name = "Spine" }]
+dependencies = [
+    "spine-core",
+    "anyio>=4.4",
+]
+
+[project.entry-points."spine.plugins"]
+# Targets resolve through the package __init__, which registers every name.
+mw_retry = "spine_middleware:Retry"
+mw_fallback = "spine_middleware:ModelFallback"
+mw_loopguard = "spine_middleware:LoopGuard"
+mw_cost = "spine_middleware:CostTracking"
+mw_compaction = "spine_middleware:Compaction"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spine_middleware"]
+
+[tool.uv.sources]
+spine-core = { workspace = true }
