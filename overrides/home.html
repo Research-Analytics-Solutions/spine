@@ -1,0 +1,42 @@
+{% extends "main.html" %}
+
+{% block tabs %}
+{{ super() }}
+<section class="spine-hero">
+  <div class="spine-hero__inner">
+    <img src="{{ 'assets/logo-hero.svg' | url }}" alt="Spine" class="spine-hero__logo" />
+    <h1 class="spine-hero__title">Spine</h1>
+    <p class="spine-hero__tagline">
+      A lightweight, modular, protocol-native runtime for production AI agents.
+    </p>
+    <p class="spine-hero__sub">
+      A tiny, load-bearing kernel — guards, durable state, and observability —
+      that everything else plugs into as opt-in middleware, swappable backends,
+      and protocol adapters.
+    </p>
+    <div class="spine-hero__cta">
+      <a href="{{ 'quickstart/' | url }}" class="md-button md-button--primary">Get started</a>
+      <a href="{{ 'concepts/kernel/' | url }}" class="md-button">How it works</a>
+      <a href="{{ config.repo_url }}" class="md-button spine-hero__ghost">GitHub</a>
+    </div>
+    <div class="spine-hero__code">
+<pre><code><span class="spine-k">from</span> spine_core <span class="spine-k">import</span> Agent
+
+agent = Agent(<span class="spine-s">"openai:gpt-4o-mini"</span>)
+result = <span class="spine-k">await</span> agent.run(<span class="spine-s">"say hello"</span>)
+<span class="spine-fn">print</span>(result.answer)</code></pre>
+    </div>
+    <div class="spine-hero__badges">
+      <span>No hidden prompts</span>
+      <span>No runaway loops</span>
+      <span>Deterministic replay</span>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="spine-home-body">
+  {{ super() }}
+</div>
+{% endblock %}

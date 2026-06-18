@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="none" role="img" aria-label="Spine">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#818cf8"/>
+      <stop offset="1" stop-color="#4f46e5"/>
+    </linearGradient>
+  </defs>
+  <rect x="42" y="10" width="12" height="76" rx="6" fill="url(#g)" opacity="0.45"/>
+  <rect x="24" y="14" width="48" height="10.5" rx="5.25" fill="url(#g)"/>
+  <rect x="19" y="31" width="58" height="10.5" rx="5.25" fill="url(#g)"/>
+  <rect x="19" y="48" width="58" height="10.5" rx="5.25" fill="url(#g)"/>
+  <rect x="24" y="65" width="48" height="10.5" rx="5.25" fill="url(#g)"/>
+  <rect x="32" y="82" width="32" height="8" rx="4" fill="url(#g)" opacity="0.8"/>
+</svg>

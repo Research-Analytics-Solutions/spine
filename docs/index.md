@@ -1,38 +1,36 @@
-# Spine
-
-**A lightweight, modular, protocol-native runtime for production AI agents.**
-
-Spine is the *kernel* for AI agents — a tiny, load-bearing runtime that everything
-else plugs into. Where monolithic frameworks bundle heavy abstractions, Spine ships
-a small core and pushes every feature into **opt-in middleware, swappable backends,
-and protocol adapters**.
-
-```python
-from spine_core import Agent
-
-agent = Agent("openai:gpt-4o-mini")
-print((await agent.run("say hello")).answer)
-```
+---
+template: home.html
+hide:
+  - navigation
+  - toc
+---
 
 ## Three guarantees
 
 <div class="grid cards" markdown>
 
--   :material-eye-outline: **No hidden prompts**
+-   :material-eye-outline:{ .lg .middle } **No hidden prompts**
+
+    ---
 
     Every model call consumes inspectable, typed `Message` objects. No prompt is
     ever constructed outside your view.
 
--   :material-shield-check-outline: **No runaway loops**
+-   :material-shield-check-outline:{ .lg .middle } **No runaway loops**
+
+    ---
 
     [Guards](concepts/guards.md) are enforced inside the kernel, every iteration —
     not bolted on. Step, cost, token, wall-clock, and delegation ceilings are
     structural.
 
--   :material-history: **Deterministic replay**
+-   :material-history:{ .lg .middle } **Deterministic replay**
 
-    Every step emits a trace event; any run can be [recorded and replayed](concepts/observability.md)
-    step-for-step without calling the provider or any tool.
+    ---
+
+    Every step emits a trace event; any run can be
+    [recorded and replayed](concepts/observability.md) step-for-step without
+    calling the provider or any tool.
 
 </div>
 
@@ -55,5 +53,5 @@ sits in the **reliability runtime** — the execution loop, guards, durable stat
 and observability that decide whether an agent survives production. Spine owns that
 core and lets the standards do the integration.
 
-Start with the [Quickstart](quickstart.md), or read how the [kernel](concepts/kernel.md)
-works.
+[Get started :material-arrow-right:](quickstart.md){ .md-button .md-button--primary }
+[Read the architecture](architecture.md){ .md-button }
