@@ -11,6 +11,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "spine-a2a",
     "spine-backends",
     "spine-cli",
     "spine-core",
@@ -1340,6 +1341,21 @@ wheels = [
 ]
 
 [[package]]
+name = "spine-a2a"
+version = "0.1.0"
+source = { editable = "packages/spine-a2a" }
+dependencies = [
+    { name = "httpx" },
+    { name = "spine-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "spine-core", editable = "packages/spine-core" },
+]
+
+[[package]]
 name = "spine-backends"
 version = "0.1.0"
 source = { editable = "packages/spine-backends" }
@@ -1508,6 +1524,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
+    { name = "spine-a2a" },
     { name = "spine-backends" },
     { name = "spine-cli" },
     { name = "spine-core" },
@@ -1528,6 +1545,7 @@ dev = [
     { name = "pytest", specifier = ">=8.2" },
     { name = "pytest-asyncio", specifier = ">=0.24" },
     { name = "ruff", specifier = ">=0.6" },
+    { name = "spine-a2a", editable = "packages/spine-a2a" },
     { name = "spine-backends", editable = "packages/spine-backends" },
     { name = "spine-cli", editable = "packages/spine-cli" },
     { name = "spine-core", editable = "packages/spine-core" },
