@@ -172,3 +172,19 @@ def test_doctor_flags_unknown_middleware(tmp_path: Path) -> None:
     result = runner.invoke(app, ["doctor", "--path", str(proj)])
     assert result.exit_code == 1
     assert "NoSuchMiddleware" in result.stdout
+
+
+def test_eval_command_runs_suite(tmp_path: Path) -> None:
+    from spine_core.provider import register_provider
+    from spine_core.testing import ScriptedProvider, text
+
+    register_provider("fakeeval", lambda model: ScriptedProvider(text("the answer is hello")))
+    proj = _config_project(tmp_path, model="fakeeval:x")
+    (proj / "evals").mkdir()
+    (proj / "evals" / "smoke.yaml").write_text(
+        "cases:\n  - id: g\n    input: 'say hi'\n    expected: 'hello'\n"
+    )
+    result = runner.invoke(app, ["eval", "evals/smoke.yaml", "--path", str(proj)])
+    assert result.exit_code == 0, result.stdout
+    assert "pass rate" in result.stdout
+    assert "100%" in result.stdout

@@ -171,6 +171,62 @@ def plugin_list() -> None:
     console.print(table)
 
 
+@app.command("eval")
+def eval_cmd(
+    suite: str = typer.Argument(..., help="Path to the eval dataset (.yaml/.json)."),
+    path: Path = typer.Option(Path("."), help="Project root."),
+    scorer: str = typer.Option("contains", help="Built-in scorer: contains | exact."),
+) -> None:
+    """Run the eval harness for the spine.toml agent against a dataset."""
+    import functools
+
+    import anyio
+
+    try:
+        from spine_eval import Contains, ExactMatch, Scorer, evaluate, load_dataset
+    except ImportError as exc:
+        console.print("[red]error:[/] spine-eval is not installed ([cyan]uv add spine-eval[/])")
+        raise typer.Exit(1) from exc
+
+    config_path = find_config(path)
+    if config_path is None:
+        console.print("[red]error:[/] no spine.toml found")
+        raise typer.Exit(1)
+    config = load_config(config_path)
+    project_root = config_path.parent
+
+    suite_path = Path(suite)
+    if not suite_path.is_absolute():
+        suite_path = project_root / suite
+    if not suite_path.is_file():
+        console.print(f"[red]error:[/] no eval suite at {suite_path}")
+        raise typer.Exit(1)
+
+    from spine_cli.builder import build_agent
+
+    agent = build_agent(config, project_root)
+    dataset = load_dataset(suite_path)
+    options: dict[str, list[Scorer]] = {"contains": [Contains()], "exact": [ExactMatch()]}
+    scorers = options.get(scorer)
+    if scorers is None:
+        console.print(f"[red]error:[/] unknown scorer {scorer!r} (use contains|exact)")
+        raise typer.Exit(1)
+
+    report = anyio.run(functools.partial(evaluate, agent, dataset, scorers))
+
+    table = Table("metric", "value")
+    table.add_row("cases", str(report.total))
+    table.add_row("pass rate", f"{report.pass_rate:.0%} ({report.passed}/{report.total})")
+    table.add_row("error rate", f"{report.error_rate:.0%}")
+    table.add_row("cost (total)", f"${report.cost_total_usd:.4f}")
+    table.add_row("latency avg / p95", f"{report.latency_avg_s:.2f}s / {report.latency_p95_s:.2f}s")
+    for name, mean in report.scorer_means.items():
+        table.add_row(f"scorer:{name}", f"{mean:.2f}")
+    console.print(table)
+    if report.error_rate > 0 or report.pass_rate < 1.0:
+        raise typer.Exit(1)
+
+
 @app.command()
 def chat(
     input: str = typer.Argument(..., help="The input message."),

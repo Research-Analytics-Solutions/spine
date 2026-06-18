@@ -19,6 +19,7 @@ dependencies = [
     "spine-providers",
     "spine-middleware",
     "spine-backends",
+    "spine-eval",
 ]
 """
 
@@ -98,6 +99,14 @@ __pycache__/
 *.py[oc]
 .venv
 .env
+.spine/
+"""
+
+_SMOKE_EVAL = """\
+cases:
+  - id: greeting
+    input: "say hello"
+    expected: "hello"
 """
 
 
@@ -112,5 +121,6 @@ def render(name: str, template: str = "minimal") -> dict[str, str]:
         ".gitignore": _GITIGNORE,
         "agents/assistant.py": _ASSISTANT,
         "tools/__init__.py": _TOOLS,
+        "evals/smoke.yaml": _SMOKE_EVAL,
         "README.md": _README.format(name=name),
     }
