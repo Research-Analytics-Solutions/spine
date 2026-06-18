@@ -188,3 +188,17 @@ def test_eval_command_runs_suite(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.stdout
     assert "pass rate" in result.stdout
     assert "100%" in result.stdout
+
+
+def test_dev_streams_trace_live(tmp_path: Path) -> None:
+    from spine_core.provider import register_provider
+    from spine_core.testing import ScriptedProvider, text
+
+    register_provider("fakedev", lambda model: ScriptedProvider(text("dev answer")))
+    proj = _config_project(tmp_path, model="fakedev:x")
+    result = runner.invoke(app, ["dev", "hello", "--path", str(proj)])
+    assert result.exit_code == 0, result.stdout
+    assert "step_start" in result.stdout
+    assert "model_call" in result.stdout
+    assert "final" in result.stdout
+    assert "dev answer" in result.stdout

@@ -228,6 +228,36 @@ def eval_cmd(
 
 
 @app.command()
+def dev(
+    input: str = typer.Argument(..., help="The input message."),
+    path: Path = typer.Option(Path("."), help="Project root."),
+) -> None:
+    """Run the spine.toml agent and stream every step's trace event live."""
+    import anyio
+
+    from spine_cli.builder import build_agent, save_trace
+
+    config_path = find_config(path)
+    if config_path is None:
+        console.print("[red]error:[/] no spine.toml found")
+        raise typer.Exit(1)
+    config = load_config(config_path)
+    project_root = config_path.parent
+    agent = build_agent(config, project_root)
+
+    async def go() -> None:
+        async for event in agent.stream(input):
+            detail = ", ".join(f"{k}={v}" for k, v in event.data.items())
+            console.print(f"[dim]{event.seq:>3}[/] [cyan]{event.type}[/] {detail}")
+
+    anyio.run(go)
+    result = agent.last_result
+    if result is not None:
+        save_trace(project_root, result)
+        console.print(f"\n[bold]{result.answer or '(' + result.stopped_reason.value + ')'}[/]")
+
+
+@app.command()
 def chat(
     input: str = typer.Argument(..., help="The input message."),
     path: Path = typer.Option(Path("."), help="Project root."),
