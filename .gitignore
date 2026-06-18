@@ -8,3 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Tooling caches
+.hypothesis/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
