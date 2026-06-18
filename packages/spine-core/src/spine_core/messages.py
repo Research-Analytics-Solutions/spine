@@ -39,6 +39,10 @@ class Message(BaseModel):
 
     role: Role
     content: str | None = None
+    # Multimodal content blocks (provider-neutral): each is a dict like
+    # {"type": "text", "text": ...} or {"type": "image", "url"|"data": ...}.
+    # When set, providers send these instead of plain ``content``.
+    parts: list[dict[str, Any]] | None = None
     tool_calls: list[ToolCall] = Field(default_factory=list)
     tool_call_id: str | None = None
     name: str | None = None
@@ -52,6 +56,11 @@ class Message(BaseModel):
         return cls(role=Role.USER, content=content)
 
     @classmethod
+    def user_parts(cls, parts: list[dict[str, Any]]) -> Message:
+        """A user turn carrying multimodal content blocks (text + images)."""
+        return cls(role=Role.USER, parts=parts)
+
+    @classmethod
     def assistant(
         cls, content: str | None = None, tool_calls: list[ToolCall] | None = None
     ) -> Message:
@@ -60,6 +69,22 @@ class Message(BaseModel):
     @classmethod
     def tool(cls, content: str, tool_call_id: str, name: str | None = None) -> Message:
         return cls(role=Role.TOOL, content=content, tool_call_id=tool_call_id, name=name)
+
+
+def text_part(text: str) -> dict[str, Any]:
+    """A provider-neutral text content block."""
+    return {"type": "text", "text": text}
+
+
+def image_part(
+    *, url: str | None = None, data: str | None = None, media_type: str = "image/png"
+) -> dict[str, Any]:
+    """A provider-neutral image block — by URL or base64 ``data``."""
+    if url is not None:
+        return {"type": "image", "url": url}
+    if data is not None:
+        return {"type": "image", "data": data, "media_type": media_type}
+    raise ValueError("image_part needs either url or data")
 
 
 class Usage(BaseModel):

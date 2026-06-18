@@ -50,6 +50,24 @@ def _attr(obj: Any, name: str, default: Any = None) -> Any:
     return getattr(obj, name, default)
 
 
+def _parts_to_anthropic(parts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    blocks: list[dict[str, Any]] = []
+    for part in parts:
+        if part.get("type") == "image":
+            if "url" in part:
+                source = {"type": "url", "url": part["url"]}
+            else:
+                source = {
+                    "type": "base64",
+                    "media_type": part.get("media_type", "image/png"),
+                    "data": part.get("data", ""),
+                }
+            blocks.append({"type": "image", "source": source})
+        else:
+            blocks.append({"type": "text", "text": part.get("text", "")})
+    return blocks
+
+
 def to_anthropic_messages(messages: list[Message]) -> tuple[str | None, list[dict[str, Any]]]:
     """Split Spine messages into (system prompt, Anthropic message list).
 
@@ -64,7 +82,10 @@ def to_anthropic_messages(messages: list[Message]) -> tuple[str | None, list[dic
             if message.content:
                 system_parts.append(message.content)
         elif message.role == Role.USER:
-            out.append({"role": "user", "content": message.content or ""})
+            if message.parts:
+                out.append({"role": "user", "content": _parts_to_anthropic(message.parts)})
+            else:
+                out.append({"role": "user", "content": message.content or ""})
         elif message.role == Role.ASSISTANT:
             if message.tool_calls:
                 blocks: list[dict[str, Any]] = []

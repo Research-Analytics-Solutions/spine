@@ -121,3 +121,24 @@ async def test_end_to_end_run_with_fake_client() -> None:
     assert captured["system"] == "be helpful"
     assert captured["model"] == "claude-sonnet-4-6"
     assert captured["max_tokens"] == 1024
+
+
+def test_multimodal_user_message_maps_to_anthropic_blocks() -> None:
+    from spine_core import Message, image_part, text_part
+
+    msg = Message.user_parts(
+        [
+            text_part("what is in this image?"),
+            image_part(url="https://example.com/cat.png"),
+            image_part(data="QUJD", media_type="image/jpeg"),
+        ]
+    )
+    _, out = to_anthropic_messages([msg])
+    content = out[0]["content"]
+    assert content[0] == {"type": "text", "text": "what is in this image?"}
+    assert content[1] == {
+        "type": "image",
+        "source": {"type": "url", "url": "https://example.com/cat.png"},
+    }
+    assert content[2]["source"]["type"] == "base64"
+    assert content[2]["source"]["media_type"] == "image/jpeg"

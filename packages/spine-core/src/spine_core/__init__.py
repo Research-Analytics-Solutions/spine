@@ -19,7 +19,15 @@ from spine_core.errors import (
 from spine_core.guards import Guards
 from spine_core.interrupt import Interrupt
 from spine_core.memory import Memory, MemoryHit, MemoryRecord
-from spine_core.messages import Message, ModelResponse, Role, ToolCall, Usage
+from spine_core.messages import (
+    Message,
+    ModelResponse,
+    Role,
+    ToolCall,
+    Usage,
+    image_part,
+    text_part,
+)
 from spine_core.middleware import (
     ErrorAction,
     Middleware,
@@ -93,6 +101,8 @@ __all__ = [
     "resolve_middleware",
     "resolve_provider",
     "raw_tool",
+    "text_part",
+    "image_part",
     "tool",
     "__version__",
 ]

@@ -48,6 +48,21 @@ def _attr(obj: Any, name: str, default: Any = None) -> Any:
     return getattr(obj, name, default)
 
 
+def _parts_to_openai(parts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    blocks: list[dict[str, Any]] = []
+    for part in parts:
+        if part.get("type") == "image":
+            if "url" in part:
+                url = part["url"]
+            else:
+                media_type = part.get("media_type", "image/png")
+                url = f"data:{media_type};base64,{part.get('data', '')}"
+            blocks.append({"type": "image_url", "image_url": {"url": url}})
+        else:
+            blocks.append({"type": "text", "text": part.get("text", "")})
+    return blocks
+
+
 def to_openai_messages(messages: list[Message]) -> list[dict[str, Any]]:
     """Translate Spine messages to OpenAI Chat Completions format."""
     out: list[dict[str, Any]] = []
@@ -75,6 +90,8 @@ def to_openai_messages(messages: list[Message]) -> list[dict[str, Any]]:
                     "content": message.content or "",
                 }
             )
+        elif message.role is Role.USER and message.parts:
+            out.append({"role": "user", "content": _parts_to_openai(message.parts)})
         else:
             out.append({"role": message.role.value, "content": message.content or ""})
     return out

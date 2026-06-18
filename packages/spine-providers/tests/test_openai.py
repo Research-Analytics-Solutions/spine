@@ -111,3 +111,16 @@ async def test_end_to_end_run_with_fake_client() -> None:
     captured = provider._client.chat.completions.captured
     assert captured["messages"][0] == {"role": "system", "content": "be helpful"}
     assert captured["model"] == "gpt-4o"
+
+
+def test_multimodal_user_message_maps_to_openai_blocks() -> None:
+    from spine_core import Message, image_part, text_part
+
+    msg = Message.user_parts(
+        [text_part("describe"), image_part(url="https://x/y.png"), image_part(data="QUJD")]
+    )
+    out = to_openai_messages([msg])
+    content = out[0]["content"]
+    assert content[0] == {"type": "text", "text": "describe"}
+    assert content[1] == {"type": "image_url", "image_url": {"url": "https://x/y.png"}}
+    assert content[2]["image_url"]["url"].startswith("data:image/png;base64,QUJD")
