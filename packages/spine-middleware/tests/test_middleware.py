@@ -114,6 +114,14 @@ async def test_structured_output_repairs_then_validates() -> None:
     assert result.state.step == 2  # one repair turn happened
 
 
+async def test_structured_output_accepts_fenced_json() -> None:
+    provider = ScriptedProvider(text('```json\n{"name": "Ada", "age": 36}\n```'))
+    agent = Agent(provider, middleware=[StructuredOutput(_Person)])
+    result = await agent.run("extract")
+    assert result.ok
+    assert result.state.scratch["structured_output"] == {"name": "Ada", "age": 36}
+
+
 async def test_structured_output_fails_loud_after_repairs() -> None:
     provider = ScriptedProvider(text("never json"), repeat=True)
     agent = Agent(provider, middleware=[StructuredOutput(_Person, max_repairs=1)])

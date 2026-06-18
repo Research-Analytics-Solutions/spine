@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from spine_core import Agent, Interrupt, StopReason, tool
+import pytest
+
+from spine_core import Agent, Interrupt, ResumeError, StopReason, tool
 from spine_core.testing import ScriptedProvider, calls, text
 
 executed: list[str] = []
@@ -78,6 +80,12 @@ async def test_resume_survives_a_fresh_agent_via_shared_checkpoint() -> None:
     resumed = await agent2.resume(session_id, decision="approve")
     assert resumed.ok
     assert executed == ["5->bob"]
+
+
+async def test_resume_unknown_token_raises() -> None:
+    agent = Agent(ScriptedProvider(text("x")))
+    with pytest.raises(ResumeError):
+        await agent.resume("not-a-real-session")
 
 
 async def test_manual_interrupt_decision_becomes_tool_result() -> None:
