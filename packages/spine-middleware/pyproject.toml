@@ -26,6 +26,11 @@ mw_cache = "spine_middleware:Cache"
 mw_pii = "spine_middleware:PIIRedaction"
 mw_injection = "spine_middleware:PromptInjectionScreen"
 mw_content_policy = "spine_middleware:ContentPolicy"
+mw_circuit_breaker = "spine_middleware:CircuitBreaker"
+mw_rate_limit = "spine_middleware:RateLimit"
+mw_idempotency = "spine_middleware:Idempotency"
+mw_tool_timeout = "spine_middleware:ToolTimeout"
+mw_tool_truncation = "spine_middleware:ToolOutputTruncation"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/spine_middleware"]
