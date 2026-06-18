@@ -206,13 +206,18 @@ class Agent:
             try:
                 await self.chain.before_model(ctx)
 
-                schemas = [t.schema for t in ctx.tools]
-                tracer.emit(EventType.MODEL_CALL, step=state.step, messages=len(ctx.messages))
-                response = await self._complete(ctx, schemas, state, tracer, started)
-                if isinstance(response, Result):  # error path bubbled a Result
-                    return response
+                # A middleware (e.g. Cache) may preset ctx.response to serve a
+                # hit; only call the provider when nothing did.
+                if ctx.response is None:
+                    schemas = [t.schema for t in ctx.tools]
+                    tracer.emit(EventType.MODEL_CALL, step=state.step, messages=len(ctx.messages))
+                    response = await self._complete(ctx, schemas, state, tracer, started)
+                    if isinstance(response, Result):  # error path bubbled a Result
+                        return response
+                    ctx.response = response
+                else:
+                    tracer.emit(EventType.MODEL_CALL, step=state.step, cached=True)
 
-                ctx.response = response
                 # after_model runs *before* usage is banked so a cost-tracking
                 # middleware can rewrite response.usage and have it count.
                 await self.chain.after_model(ctx)

@@ -9,6 +9,7 @@ hook points (no kernel edits).
 | `ModelFallback` | `on_error` | Switch to the next provider when one fails |
 | `LoopGuard` | `after_model` | Stop when the same tool action repeats (`StopReason.LOOP`) |
 | `CostTracking` | `after_model` | Fill `cost_usd` from a price table so cost guards bite |
+| `Cache` | `before/after_model` | Serve an identical request from a content-hashed cache (TTL, free on hit) |
 | `Compaction` | `before_model` | Trim long histories non-destructively |
 | `StructuredOutput` | `before/after_model` | Validate the final answer against a Pydantic schema, repairing on failure |
 | `PIIRedaction` | `after_tool`, `after_model` | Redact PII from tool output (and traces) and the final answer |
