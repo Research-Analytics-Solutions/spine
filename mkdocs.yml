@@ -118,6 +118,15 @@ nav:
       - Deployment & scale: guides/deployment.md
       - Patterns & edge cases: guides/patterns.md
   - Cookbook: guides/examples.md
+  - Deep dives:
+      - Evaluation: deepdive/eval.md
+      - MCP: deepdive/mcp.md
+  - Extending & contributing:
+      - Contributing: contributing.md
+      - Build a middleware: develop/middleware.md
+      - Build a provider: develop/provider.md
+      - Build a backend: develop/backend.md
+      - Publish a plugin: develop/publish.md
   - Reference:
       - Data model & wire shapes: reference/data-model.md
       - Middleware catalog: reference/middleware.md
