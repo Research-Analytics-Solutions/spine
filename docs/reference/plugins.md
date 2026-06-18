@@ -66,5 +66,5 @@ Now it's usable from code and from a `spine.toml` chain.
 
 ## Compatibility
 
-Declare a core version range (`spine-core>=1.0,<2.0`). The kernel's hook-point and
+Declare a core version range (`spinekit>=1.0,<2.0`). The kernel's hook-point and
 protocol definitions are the stable plugin ABI, versioned with SemVer.

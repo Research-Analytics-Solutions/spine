@@ -28,9 +28,9 @@ protocol is tiny: `put` / `get` / `delete`.
 | Backend | Use | Install |
 |---|---|---|
 | `InMemoryCheckpointStore` | default, single process | built in |
-| `SQLiteCheckpoint` | embedded, durable | `spine-backends` |
-| `RedisCheckpoint` | distributed workers | `spine-backends[redis]` |
-| `PostgresCheckpoint` | durable + optimistic locking | `spine-backends[postgres]` |
+| `SQLiteCheckpoint` | embedded, durable | `spinekit` |
+| `RedisCheckpoint` | distributed workers | `spinekit[redis]` |
+| `PostgresCheckpoint` | durable + optimistic locking | `spinekit[postgres]` |
 
 ```python
 from spine_core import Agent

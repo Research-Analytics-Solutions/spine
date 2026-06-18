@@ -8,9 +8,9 @@ Memory is long-term, semantic recall across sessions — distinct from a
 
 | Type | Recall | Install |
 |---|---|---|
-| `InMemoryVectorMemory` | embedding cosine similarity | `spine-backends` |
-| `BufferMemory` | recency (last-N), non-semantic | `spine-backends` |
-| `PgVectorMemory` | Postgres + pgvector, at scale | `spine-backends[postgres]` |
+| `InMemoryVectorMemory` | embedding cosine similarity | `spinekit` |
+| `BufferMemory` | recency (last-N), non-semantic | `spinekit` |
+| `PgVectorMemory` | Postgres + pgvector, at scale | `spinekit[postgres]` |
 
 ```python
 from spine_backends import InMemoryVectorMemory, BufferMemory

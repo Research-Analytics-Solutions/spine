@@ -79,8 +79,11 @@ spine/
 └── docs/
 ```
 
-Split packages keep the core dependency-light while letting each plugin version
-independently.
+The source is organized by plane under `packages/*/src/` (import names
+`spine_core`, `spine_providers`, …), but it all ships as **one distribution,
+`spinekit`** — a lean core (Pydantic + anyio) with heavy dependencies as opt-in
+extras (`spinekit[openai]`, `spinekit[redis]`, `spinekit[all]`, …). The code is
+small; only the third-party dependencies are optional.
 
 ## The bet
 

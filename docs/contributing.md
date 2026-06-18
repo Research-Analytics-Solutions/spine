@@ -1,15 +1,15 @@
 # Contributing
 
-Spine is a `uv` workspace monorepo of small packages. This page gets you from
-clone to a green pull request, and explains how the codebase is laid out so you
-can find your way around.
+Spine's source is organized by plane under `packages/*/src/`, but it ships as one
+distribution (`spinekit`). This page gets you from clone to a green pull request,
+and explains how the codebase is laid out so you can find your way around.
 
 ## Setup
 
 ```bash
 git clone https://github.com/Research-Analytics-Solutions/spine
 cd spine
-uv sync            # installs every workspace package + dev tools, editable
+uv sync            # installs spinekit (editable) + dev tools + every runtime lib
 ```
 
 Python **3.12+** (the repo pins 3.13). The kernel's only runtime dependencies are
@@ -44,10 +44,12 @@ spine/
 │   ├── spine-orchestration/ # multi-agent patterns
 │   └── spine-cli/           # the CLI
 ├── docs/                    # this site (mkdocs-material)
-└── pyproject.toml           # workspace + dev tooling config
+└── pyproject.toml           # the spinekit distribution + dev tooling config
 ```
 
-Each package is independent: `src/<pkg>/`, `tests/`, `pyproject.toml`, `README.md`.
+Each plane lives in `packages/<area>/src/<module>` with `tests/` alongside; the
+root `pyproject.toml` bundles them into the single `spinekit` distribution and
+declares the extras.
 
 ## Design rules (these are review gates)
 

@@ -50,7 +50,7 @@ register()   # self-register on import
 name = "spine-mw-profanity"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["spine-core>=0.1,<1.0"]
+dependencies = ["spinekit>=0.1,<1.0"]
 
 [project.entry-points."spine.plugins"]
 mw_profanity = "spine_mw_profanity:ProfanityFilter"
@@ -105,7 +105,7 @@ uv publish                     # uploads (uses your PyPI token)
 
 ## Compatibility & trust
 
-- **Pin a core range:** `dependencies = ["spine-core>=0.1,<1.0"]`. The kernel's
+- **Pin a core range:** `dependencies = ["spinekit>=0.1,<1.0"]`. The kernel's
   hook points and protocols are the stable plugin ABI, versioned with SemVer; a
   breaking change requires a major bump.
 - **Heavy deps go in extras** so a base install stays light (see
