@@ -95,6 +95,7 @@ class Agent:
         system: str | None = None,
         name: str | None = None,
         parallel_tools: bool = False,
+        tenant_id: str | None = None,
     ) -> None:
         self.provider: Provider = provider or resolve_provider(model)
         self.tools: dict[str, Tool] = {t.name: t for t in (tools or [])}
@@ -104,6 +105,7 @@ class Agent:
         self.system = system
         self.name = name
         self.parallel_tools = parallel_tools
+        self.tenant_id = tenant_id
         self.last_result: Result | None = None
 
     # -- public API ---------------------------------------------------------
@@ -225,7 +227,7 @@ class Agent:
         if session_id is not None:
             state = await self.checkpoint.get(session_id)
         if state is None:
-            state = State(session_id=session_id or _new_session_id())
+            state = State(session_id=session_id or _new_session_id(), tenant_id=self.tenant_id)
             if self.system:
                 state.add_message(Message.system(self.system))
         state.add_message(Message.user(input))

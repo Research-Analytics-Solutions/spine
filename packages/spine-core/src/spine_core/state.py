@@ -42,6 +42,7 @@ class State(BaseModel):
 
     version: int = STATE_VERSION
     session_id: str
+    tenant_id: str | None = None  # for per-tenant budgets, isolation, namespacing
     messages: list[Message] = Field(default_factory=list)
     step: int = 0
     usage: Usage = Field(default_factory=Usage)

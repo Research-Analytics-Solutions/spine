@@ -16,6 +16,7 @@ from spine_middleware.fallback import ModelFallback
 from spine_middleware.guardrails import ContentPolicy, PIIRedaction, PromptInjectionScreen
 from spine_middleware.loopguard import LoopGuard
 from spine_middleware.memory import MemoryRecall
+from spine_middleware.multitenancy import TenantBudget
 from spine_middleware.reliability import CircuitBreaker, Idempotency, RateLimit
 from spine_middleware.replay import Recorder, Replayer
 from spine_middleware.retry import Retry
@@ -39,6 +40,7 @@ __all__ = [
     "Replayer",
     "Retry",
     "StructuredOutput",
+    "TenantBudget",
     "ToolOutputTruncation",
     "ToolTimeout",
 ]
@@ -60,6 +62,7 @@ def register() -> None:
     register_middleware("Idempotency", Idempotency)
     register_middleware("ToolTimeout", ToolTimeout)
     register_middleware("ToolOutputTruncation", ToolOutputTruncation)
+    register_middleware("TenantBudget", TenantBudget)
     # StructuredOutput needs a schema type, so it is used from code, not config.
 
 
