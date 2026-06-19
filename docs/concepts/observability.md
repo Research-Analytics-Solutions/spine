@@ -14,6 +14,26 @@ for event in result.trace:
 Event types: `step_start`, `model_call`, `token`, `model_response`, `tool_call`,
 `tool_result`, `guard_trip`, `interrupt`, `error`, `final`.
 
+!!! note "The kernel never prints"
+    Spine writes nothing to stdout or `logging` — traces are **data**, not console
+    spam. To get a readable log in your terminal, opt in with the `ConsoleLogger`
+    middleware:
+
+    ```python
+    from spine_middleware import ConsoleLogger
+    agent = Agent("openai:gpt-4o-mini", middleware=[ConsoleLogger()])
+    ```
+    ```
+    11:02:19 spine ▶ run    531df530
+    11:02:19 spine → model  step 1 · 1 msg
+    11:02:19 spine ⚙ tool   add(a=17, b=25)
+    11:02:19 spine ✓ tool   add → 42
+    11:02:19 spine ■ done   final · 2 steps · $0.00012
+    ```
+
+    It is **opt-in** — the kernel prints nothing unless you add `ConsoleLogger`.
+    Options: `ConsoleLogger(prefix="myagent", timestamp=False)`.
+
 ## Live streaming
 
 `agent.stream()` yields trace events as they happen — including `token` deltas

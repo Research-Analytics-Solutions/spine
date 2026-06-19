@@ -11,6 +11,7 @@ from __future__ import annotations
 from spine_core.registry import register_middleware
 from spine_middleware.cache import Cache
 from spine_middleware.compaction import Compaction
+from spine_middleware.console import ConsoleLogger
 from spine_middleware.cost import CostTracking
 from spine_middleware.fallback import ModelFallback
 from spine_middleware.guardrails import ContentPolicy, PIIRedaction, PromptInjectionScreen
@@ -28,6 +29,7 @@ __all__ = [
     "Cache",
     "CircuitBreaker",
     "Compaction",
+    "ConsoleLogger",
     "ContentPolicy",
     "CostTracking",
     "Idempotency",
@@ -66,6 +68,7 @@ def register() -> None:
     register_middleware("ToolOutputTruncation", ToolOutputTruncation)
     register_middleware("TenantBudget", TenantBudget)
     register_middleware("Sandbox", Sandbox)
+    register_middleware("ConsoleLogger", ConsoleLogger)
     # StructuredOutput needs a schema type, so it is used from code, not config.
 
 

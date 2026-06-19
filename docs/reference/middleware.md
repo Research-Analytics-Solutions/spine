@@ -52,6 +52,7 @@ for `spine.toml` chains.
 
 | Middleware | Hook(s) | What it does |
 |---|---|---|
+| `ConsoleLogger()` | all hooks | Opt-in pretty terminal log of each step/tool/result (Rich if installed) |
 | `OTelMiddleware(tracer=...)` (from `spine-otel`) | run/model/tool spans | One OpenTelemetry span tree per run |
 
 See [Guardrails & safety](../guides/guardrails.md) and [Middleware
