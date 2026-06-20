@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.0](https://github.com/Research-Analytics-Solutions/spine/compare/v0.2.0...v0.3.0) (2026-06-20)
+
+
+### Features
+
+* **middleware:** ConsoleLogger — opt-in pretty terminal logs ([72fc1f1](https://github.com/Research-Analytics-Solutions/spine/commit/72fc1f17e4dbace45fd8cc5271888bbfc8d159fc))
+
+
+### Bug Fixes
+
+* **middleware:** wrap long ConsoleLogger line (E501) ([daf8807](https://github.com/Research-Analytics-Solutions/spine/commit/daf8807e3e5e3a6c5631f988d8bb004a9e7abc26))
+
+
+### Documentation
+
+* real footprint benchmark vs other agent frameworks ([e23c236](https://github.com/Research-Analytics-Solutions/spine/commit/e23c236d88e025459fc021fc9f577ce3ed9c26d4))
+
 ## [0.2.0](https://github.com/Research-Analytics-Solutions/spine/compare/v0.1.0...v0.2.0) (2026-06-18)
 
 
