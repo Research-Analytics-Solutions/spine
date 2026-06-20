@@ -95,10 +95,7 @@ class ConsoleLogger:
         return None
 
     async def on_run_end(self, state: State, result: Result) -> None:
-        color = "red" if result.stopped_reason.value in ("error", "guardrail", "loop") else "green"
-        self._log(
-            "■",
-            "done",
-            f"[bold]{result.stopped_reason.value}[/] · {state.step} steps · ${state.usage.cost_usd:.5f}",
-            color,
-        )
+        reason = result.stopped_reason.value
+        color = "red" if reason in ("error", "guardrail", "loop") else "green"
+        msg = f"[bold]{reason}[/] · {state.step} steps · ${state.usage.cost_usd:.5f}"
+        self._log("■", "done", msg, color)
